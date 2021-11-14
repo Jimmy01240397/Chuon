@@ -22,6 +22,12 @@ namespace Chuon
             ToObject();
         }
 
+        public ChuonString(byte[] thing, Encoding encoding)
+        {
+            data = encoding.GetString(thing);
+            ToObject();
+        }
+
         public object ToObject()
         {
             return ChuonStringDeserializeToObject(data);
@@ -37,6 +43,10 @@ namespace Chuon
             return ObjectSerializeToChuonStringWithEnter(ToObject());
         }
 
+        public byte[] ToBinaryArray(Encoding encoding)
+        {
+            return encoding.GetBytes(data);
+        }
         public ChuonBinary ToChuonBinary()
         {
             object datas = ToObject();

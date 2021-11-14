@@ -1,9 +1,11 @@
 package com.jimmiker;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +23,12 @@ public class ChuonString {
         data = thing;
         toObject();
     }
+    
+    public ChuonString(byte[] thing, Charset encoding) throws Exception
+    {
+        data = new String(thing, encoding);
+        toObject();
+    }
 
     public Object toObject() throws Exception
     {
@@ -33,6 +41,11 @@ public class ChuonString {
         return data;
     }
 
+    public byte[] toBinaryArray(Charset encoding) throws UnsupportedEncodingException 
+    {
+		return data.getBytes(encoding);
+	}
+    
     public String toStringWithEnter() throws Exception
     {
         return ObjectSerializeToChuonStringWithEnter(toObject());
