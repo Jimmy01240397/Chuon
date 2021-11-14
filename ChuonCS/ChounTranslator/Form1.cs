@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
 using Chuon;
@@ -14,7 +15,58 @@ namespace ChounTranslator
             InitializeComponent();
             richTextBox2 = NewScintilla("cs", "");
             panel1.Controls.Add(richTextBox2);
+
+            x = this.Width;
+            y = this.Height;
+            setTag(this);
+
         }
+
+        #region 控制元件大小隨窗體大小等比例縮放
+        private float x;//定義當前窗體的寬度
+        private float y;//定義當前窗體的高度
+        private void setTag(Control cons)
+        {
+            foreach (Control con in cons.Controls)
+            {
+                con.Tag = con.Width + ";" + con.Height + ";" + con.Left + ";" + con.Top + ";" + con.Font.Size;
+                if (con.Controls.Count > 0)
+                {
+                    setTag(con);
+                }
+            }
+        }
+        private void setControls(float newx, float newy, Control cons)
+        {
+            //遍歷窗體中的控制元件，重新設定控制元件的值
+            foreach (Control con in cons.Controls)
+            {
+                //獲取控制元件的Tag屬性值，並分割後儲存字串陣列
+                if (con.Tag != null)
+                {
+                    string[] mytag = con.Tag.ToString().Split(new char[] { ';' });
+                    //根據窗體縮放的比例確定控制元件的值
+                    con.Width = Convert.ToInt32(System.Convert.ToSingle(mytag[0]) * newx);//寬度
+                    con.Height = Convert.ToInt32(System.Convert.ToSingle(mytag[1]) * newy);//高度
+                    con.Left = Convert.ToInt32(System.Convert.ToSingle(mytag[2]) * newx);//左邊距
+                    con.Top = Convert.ToInt32(System.Convert.ToSingle(mytag[3]) * newy);//頂邊距
+                    //Single currentSize = System.Convert.ToSingle(mytag[4]) * newy;//字型大小
+                    //con.Font = new Font(con.Font.Name, currentSize, con.Font.Style, con.Font.Unit);
+                    if (con.Controls.Count > 0)
+                    {
+                        setControls(newx, newy, con);
+                    }
+                }
+            }
+        }
+        private void Form1_Resize(object sender, EventArgs e)
+        {
+            float newx = (this.Width) / x;
+            float newy = (this.Height) / y;
+            setControls(newx, newy, this);
+        }
+
+        #endregion
 
         private Scintilla NewScintilla(string Language, string text)
         {

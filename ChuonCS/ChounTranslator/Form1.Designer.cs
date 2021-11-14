@@ -203,6 +203,7 @@
             this.Controls.Add(this.textBox1);
             this.Name = "Form1";
             this.Text = "ChuonTranslator";
+            this.Resize += new System.EventHandler(this.Form1_Resize);
             this.ResumeLayout(false);
             this.PerformLayout();
 
