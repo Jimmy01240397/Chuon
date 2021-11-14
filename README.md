@@ -9,6 +9,7 @@ Chummy Object Notation is a data interchange format and a serialization format t
 
 ### Base 128
 If first byte is Less than 128 than it don't have next digit.
+
 If first byte is Greater than 128 than the number is:
 
 (byte[1]-128) * 128^1 + ... + (byte[n - 1]-128) * 128^{n - 1} + byte[n] * 128^n
