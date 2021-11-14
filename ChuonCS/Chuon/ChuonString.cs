@@ -80,12 +80,12 @@ namespace Chuon
                         if (type == "object[]")
                             a += ObjectToString(cont + 1, c.GetValue(i), enter) + "," + printTab(enter, cont + 1);
                         else
-                            a += makestring(type == "char[]" ? "\'" : "\"", type == "char[]" || type == "string[]", i) + ",";
+                            a += makestring(type == "char[]" ? "\'" : "\"", type == "char[]" || type == "string[]", i) + "," + printTab(enter, cont + 1);
                     }
                     if (type == "object[]")
                         a += ObjectToString(cont + 1, c.GetValue(c.Length - 1), enter) + printTab(enter, cont) + "}";
                     else
-                        a += makestring(type == "char[]" ? "\'" : "\"", type == "char[]" || type == "string[]", c.Length - 1) + "}";
+                        a += makestring(type == "char[]" ? "\'" : "\"", type == "char[]" || type == "string[]", c.Length - 1) + printTab(enter, cont) + "}";
                 }
             }
             else
@@ -253,7 +253,7 @@ namespace Chuon
                                         break;
                                     }
                             }
-                            System.Reflection.MethodInfo method = typeof(Convert).GetMethod("To" + types[0].Name);
+                            System.Reflection.MethodInfo method = typeof(Convert).GetMethod("To" + types[0].Name, new Type[] { typeof(string) });
                             c.Add(method.Invoke(null, data));
                         }
                     }

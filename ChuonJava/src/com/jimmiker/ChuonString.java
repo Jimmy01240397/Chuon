@@ -84,12 +84,12 @@ public class ChuonString {
                     if (type == "object[]")
                         a += ObjectToString(cont + 1, Array.get(thing, i), enter) + "," + printTab(enter, cont + 1);
                     else
-                        a += makestring.run(type == "char[]" ? "\'" : "\"", type == "char[]" || type == "string[]", i) + ",";
+                        a += makestring.run(type == "char[]" ? "\'" : "\"", type == "char[]" || type == "string[]", i) + "," + printTab(enter, cont + 1);
                 }
                 if (type == "object[]")
                     a += ObjectToString(cont + 1, Array.get(thing, Array.getLength(thing) - 1), enter) + printTab(enter, cont) + "}";
                 else
-                    a += makestring.run(type == "char[]" ? "\'" : "\"", type == "char[]" || type == "string[]", Array.getLength(thing) - 1) + "}";
+                    a += makestring.run(type == "char[]" ? "\'" : "\"", type == "char[]" || type == "string[]", Array.getLength(thing) - 1) + printTab(enter, cont) + "}";
             }
         }
         else
