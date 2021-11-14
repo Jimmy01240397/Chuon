@@ -31,10 +31,10 @@ If first byte is Greater than 128 than the number is:
 | double     | 8 bytes     |
 | decimal     | 16 bytes     |
 | char     | 1 byte     |
-| string     | string_length_length + string_length byte     |
+| string     | string_length_length + string_length bytes     |
 | bool     | 1 byte     |
-| object     | data_type_length + data_length_length(if it is Array) + data_length byte    |
-| Dictionary     | key_type_length + data_type_length + length_length + (key_type_length + length(if it is Array) + key_length + data_type_length + length(if it is Array) + data_length)... byte     |
+| object     | data_type_length + data_length_length(if it is Array) + data_length bytes    |
+| Dictionary     | key_type_length + data_type_length + length_length + (key_type_length + length(if it is Array) + key_length + data_type_length + length(if it is Array) + data_length)... bytes     |
 
 ## Usage
 There are the types that you can use.
