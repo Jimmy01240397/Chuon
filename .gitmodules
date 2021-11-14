@@ -1,0 +1,8 @@
+[submodule "ChuonCS\\ChounTranslator\\ScintillaNET"]
+	path = ChuonCS\\ChounTranslator\\ScintillaNET
+	url = https://github.com/Jimmy01240397/ScintillaNET
+	branch = 2014Version
+[submodule "ChuonCS/ChounTranslator/ScintillaNET"]
+	path = ChuonCS/ChounTranslator/ScintillaNET
+	url = https://github.com/Jimmy01240397/ScintillaNET
+	branch = 2014Version
