@@ -1,5 +1,6 @@
 # Chuon
-Chummy Object Notation is a data interchange format and a serialization format that uses human-readable text to store and transmit data objects consisting of attribute–value pairs and arrays (or other serializable values). Or it can use the most suitable serialization format to serialize data objects consisting of attribute–value pairs and arrays (or other serializable values).
+Chummy Object Notation is a data interchange format and a serialization format that uses human-readable text to store and transmit data objects consisting of attribute-value pairs and arrays (or other serializable values). 
+Or it can use the most suitable serialization format to serialize data objects consisting of attribute-value pairs and arrays (or other serializable values).
 
 ## Binary Format
 
