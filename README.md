@@ -256,6 +256,89 @@ Dictionary:
 }
 ```
 
+## In Code
+### use Chuon
+#### C#
+``` C#
+using Chuon;
+```
+#### Java
+``` java
+import com.jimmiker.ChuonString;
+import com.jimmiker.ChuonBinary;
+```
+
+### Object to Chuon String
+#### C# and Java
+``` C#
+ChuonString chuonString = new ChuonString(objectdata);
+```
+
+### Object to Chuon Binary
+#### C# and Java
+``` C#
+ChuonBinary chuonBinary = new ChuonBinary(objectdata);
+```
+
+### Chuon String to Object
+#### C#
+``` C#
+Object objectdata = chuonString.ToObject();
+```
+#### Java
+``` C#
+Object objectdata = chuonString.toObject();
+```
+
+### Chuon Binary to Object
+#### C#
+``` C#
+Object objectdata = chuonBinary.ToObject();
+```
+#### Java
+``` C#
+Object objectdata = chuonBinary.toObject();
+```
+
+### Chuon String to Chuon Binary
+#### C#
+``` C#
+ChuonBinary chuonBinary = chuonString.ToChuonBinary();
+```
+#### Java
+``` C#
+ChuonBinary chuonBinary = chuonString.toChuonBinary();
+```
+
+### Chuon Binary to Chuon String
+#### C# and Java
+``` C#
+ChuonString chuonString = chuonBinary.ToChuonString();
+```
+#### Java
+``` C#
+ChuonString chuonString = chuonBinary.toChuonString();
+```
+
+### Chuon String Direct serialization
+#### C# and Java
+``` C#
+byte[] bytes = chuonString.ToBinaryArray(Encoding.<encoding>);
+```
+#### Java
+``` C#
+byte[] bytes = chuonString.toBinaryArray(Charset.forName("<encoding name>"));
+```
+
+### Serialize to Chuon String
+#### C# and Java
+``` C#
+ChuonString chuonString = new ChuonString(stringbytes, Encoding.<encoding>);
+```
+#### Java
+``` C#
+ChuonString chuonString = new ChuonString(stringbytes, Charset.forName("<encoding name>"));
+```
 
 ## Example
 ### C#
