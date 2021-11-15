@@ -13,19 +13,19 @@ namespace Chuon
         string data = "";
         public ChuonString(object thing)
         {
-            data = ObjectToString(0, thing, false);
+            data = ObjectSerializeToChuonString(thing);
         }
 
         public ChuonString(string thing)
         {
             data = thing;
-            ToObject();
+            data = ObjectSerializeToChuonString(ToObject());
         }
 
         public ChuonString(byte[] thing, Encoding encoding)
         {
             data = encoding.GetString(thing);
-            ToObject();
+            data = ObjectSerializeToChuonString(ToObject());
         }
 
         public object ToObject()

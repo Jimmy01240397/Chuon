@@ -15,19 +15,19 @@ public class ChuonString {
     String data = "";
     public ChuonString(Object thing) throws Exception
     {
-        data = ObjectToString(0, thing, false);
+        data = ObjectSerializeToChuonString(thing);
     }
     
     public ChuonString(String thing) throws Exception
     {
         data = thing;
-        toObject();
+        data = ObjectSerializeToChuonString(toObject());
     }
     
     public ChuonString(byte[] thing, Charset encoding) throws Exception
     {
         data = new String(thing, encoding);
-        toObject();
+        data = ObjectSerializeToChuonString(toObject());
     }
 
     public Object toObject() throws Exception
