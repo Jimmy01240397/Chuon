@@ -84,23 +84,23 @@ There are the types that you can use.
 Arrays can be used except for Dictionary and object[](it is already an array)
 
 ### byte
-``` C
+``` C#
 byte:<number>
 ```
 
 #### Array
-``` C
+``` C#
 byte[]:
 {
 	<Hex(don't add 0x)>
 }
 ```
 ### sbyte
-``` C
+``` C#
 sbyte:<number between -128~127>
 ```
 #### Array
-``` C
+``` C#
 sbyte[]:
 {
 	-55,
@@ -110,11 +110,11 @@ sbyte[]:
 }
 ```
 ### short
-``` C
+``` C#
 short:<number>
 ```
 #### Array
-``` C
+``` C#
 short[]:
 {
 	10000,
@@ -122,11 +122,11 @@ short[]:
 }
 ```
 ### int
-``` C
+``` C#
 int:<number>
 ```
 #### Array
-``` C
+``` C#
 int[]:
 {
 	100000000,
@@ -134,11 +134,11 @@ int[]:
 }
 ```
 ### long
-``` C
+``` C#
 long:<number>
 ```
 #### Array
-``` C
+``` C#
 long[]:
 {
 	1000000000000000000,
@@ -146,11 +146,11 @@ long[]:
 }
 ```
 ### ushort
-``` C
+``` C#
 ushort:<number>
 ```
 #### Array
-``` C
+``` C#
 ushort[]:
 {
 	10000,
@@ -158,11 +158,11 @@ ushort[]:
 }
 ```
 ### uint
-``` C
+``` C#
 uint:<number>
 ```
 #### Array
-``` C
+``` C#
 uint[]:
 {
 	100000000,
@@ -170,11 +170,11 @@ uint[]:
 }
 ```
 ### ulong
-``` C
+``` C#
 ulong:<number>
 ```
 #### Array
-``` C
+``` C#
 ulong[]:
 {
 	1000000000000000000,
@@ -182,11 +182,11 @@ ulong[]:
 }
 ```
 ### float
-``` C
+``` C#
 float:<floating-point number>
 ```
 #### Array
-``` C
+``` C#
 float[]:
 {
 	5.5555,
@@ -194,11 +194,11 @@ float[]:
 }
 ```
 ### double
-``` C
+``` C#
 double:<floating-point number>
 ```
 #### Array
-``` C
+``` C#
 double[]:
 {
 	5.55555555555,
@@ -206,11 +206,11 @@ double[]:
 }
 ```
 ### decimal
-``` C
+``` C#
 decimal:<floating-point number>
 ```
 #### Array
-``` C
+``` C#
 decimal[]:
 {
 	5.55555555555,
@@ -218,11 +218,11 @@ decimal[]:
 }
 ```
 ### char
-``` C
+``` C#
 char:'<character>'
 ```
 #### Array
-``` C
+``` C#
 char[]:
 {
 	'a',
@@ -230,11 +230,11 @@ char[]:
 }
 ```
 ### string
-``` C
+``` C#
 string:"<string>"
 ```
 #### Array
-``` C
+``` C#
 string[]:
 {
 	"Hello World",
@@ -242,11 +242,11 @@ string[]:
 }
 ```
 ### bool
-``` C
+``` C#
 bool:<boolean>
 ```
 #### Array
-``` C
+``` C#
 bool[]:
 {
 	true,
@@ -254,7 +254,7 @@ bool[]:
 }
 ```
 ### object[]
-``` C
+``` C#
 object[]:
 {
     int:55,
@@ -267,7 +267,7 @@ object[]:
 }
 ```
 ### Dictionary
-``` C
+``` C#
 Dictionary:
 {
     <key type>:<data type>:
