@@ -2,6 +2,29 @@
 Chummy Object Notation is a data interchange format and a serialization format that uses human-readable text to store and transmit data objects consisting of attribute-value pairs and arrays (or other serializable values). 
 Or it can use the most suitable serialization format to serialize data objects consisting of attribute-value pairs and arrays (or other serializable values).
 
+* [Binary Format](#binary-format)
+  * [Base 128](#base-128)
+  * [data binary length](#data-binary-length)
+* [String Format](#string-format)
+  * [byte](#byte)
+  * [sbyte](#sbyte)
+  * [short](#short)
+  * [int](#int)
+  * [long](#long)
+  * [ushort](#ushort)
+  * [uint](#uint)
+  * [ulong](#ulong)
+  * [float](#float)
+  * [double](#double)
+  * [decimal](#decimal)
+  * [char](#char)
+  * [string](#string)
+  * [bool](#bool)
+  * [object](#object)
+  * [Dictionary](#dictionary)
+* [Usage](#usage)
+* [Example](#example)
+
 ## Binary Format
 
 | type | length(if it is Array) | data |
@@ -39,7 +62,7 @@ If first byte is Greater than 128 than the number is:
 | object     | data_type_length + data_length_length(if it is Array) + data_length bytes    |
 | Dictionary     | key_type_length + data_type_length + length_length + (key_type_length + length(if it is Array) + key_length + data_type_length + length(if it is Array) + data_length)... bytes     |
 
-## Usage
+## String Format
 There are the types that you can use.
 * byte 
 * sbyte 
@@ -259,7 +282,7 @@ Dictionary:
 }
 ```
 
-## In Code
+## Usage
 ### use Chuon
 #### C#
 ``` C#
