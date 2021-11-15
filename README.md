@@ -314,7 +314,7 @@ ChuonBinary chuonBinary = chuonString.toChuonBinary();
 ```
 
 ### Chuon Binary to Chuon String
-#### C# and Java
+#### C#
 ``` C#
 ChuonString chuonString = chuonBinary.ToChuonString();
 ```
@@ -324,7 +324,7 @@ ChuonString chuonString = chuonBinary.toChuonString();
 ```
 
 ### Chuon String Direct serialization
-#### C# and Java
+#### C#
 ``` C#
 byte[] bytes = chuonString.ToBinaryArray(Encoding.<encoding>);
 ```
@@ -334,7 +334,7 @@ byte[] bytes = chuonString.toBinaryArray(Charset.forName("<encoding name>"));
 ```
 
 ### Serialize to Chuon String
-#### C# and Java
+#### C#
 ``` C#
 ChuonString chuonString = new ChuonString(stringbytes, Encoding.<encoding>);
 ```
