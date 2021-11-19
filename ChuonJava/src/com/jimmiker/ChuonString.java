@@ -64,7 +64,7 @@ public class ChuonString {
         if (Array.getLength(thing) > 0)
         {
             a += printTab(enter, cont) + "{" + printTab(enter, cont + 1);
-            if (type == "byte[]")
+            if (type.equals("byte[]"))
             {
                 a += StringTool.BytesToHex((byte[])thing) + printTab(enter, cont) + "}";
             }
@@ -81,15 +81,15 @@ public class ChuonString {
 				};
                 for (int i = 0; i < Array.getLength(thing) - 1; i++)
                 {
-                    if (type == "object[]")
+                    if (type.equals("object[]"))
                         a += ObjectToString(cont + 1, Array.get(thing, i), enter) + "," + printTab(enter, cont + 1);
                     else
-                        a += makestring.run(type == "char[]" ? "\'" : "\"", type == "char[]" || type == "string[]", i) + "," + printTab(enter, cont + 1);
+                        a += makestring.run(type.equals("char[]") ? "\'" : "\"", type.equals("char[]") || type.equals("string[]"), i) + "," + printTab(enter, cont + 1);
                 }
-                if (type == "object[]")
+                if (type.equals("object[]"))
                     a += ObjectToString(cont + 1, Array.get(thing, Array.getLength(thing) - 1), enter) + printTab(enter, cont) + "}";
                 else
-                    a += makestring.run(type == "char[]" ? "\'" : "\"", type == "char[]" || type == "string[]", Array.getLength(thing) - 1) + printTab(enter, cont) + "}";
+                    a += makestring.run(type.equals("char[]") ? "\'" : "\"", type.equals("char[]") || type.equals("string[]"), Array.getLength(thing) - 1) + printTab(enter, cont) + "}";
             }
         }
         else
@@ -113,7 +113,7 @@ public class ChuonString {
             {
                 a += ObjectToStringForArray(cont, thing, enter);
             }
-            else if (typ == "Dictionary")
+            else if (typ.equals("Dictionary"))
             {
                 Map c = (Map)thing;
                 Class datatype = thing.getClass();
@@ -167,7 +167,7 @@ public class ChuonString {
 	                        return nowthing.toString();
 					}
 				};
-                a += makestring.run(typ == "char" ? "\'" : "\"", typ == "char" || typ == "string");
+                a += makestring.run(typ.equals("char") ? "\'" : "\"", typ.equals("char") || typ.equals("string"));
             }
             else
             {
@@ -199,11 +199,11 @@ public class ChuonString {
         String typenames = TypeFormat.ToJavaTrueTypeName(typ);
 
         int found = thing.indexOf(':');
-        if (thing.substring(found + 1) != "NotThing")
+        if (!thing.substring(found + 1).equals("NotThing"))
         {
             String a = StringTool.TakeString(thing.substring(found + 1), '{', '}')[0];
 
-            if (typ == "byte")
+            if (typ.equals("byte"))
             {
                 a = a.replace(" ", "");
                 return StringTool.HexToBytes(a);
@@ -211,7 +211,7 @@ public class ChuonString {
             else
             {
                 String[] b = null;
-                if (typ == "object")
+                if (typ.equals("object"))
                 {
                     b = StringTool.TakeString(a, '{', '}');
                     for (int i = 0; i < b.length; i++)
@@ -236,7 +236,7 @@ public class ChuonString {
 
                 Object output;
                 
-                if (typ == "object")
+                if (typ.equals("object"))
                 {
                 	output = new Object[b.length];
                     for (int i = 0; i < b.length; i++)
@@ -366,7 +366,7 @@ public class ChuonString {
         {
             get = StringToObjectForArray(thing);
         }
-        else if (typ == "Dictionary")
+        else if (typ.equals("Dictionary"))
         {
             int found = thing.indexOf(':');
             String _data = StringTool.TakeString(thing.substring(found + 1), '{', '}')[0];
@@ -381,7 +381,7 @@ public class ChuonString {
             
             get = new HashMap();
 
-            if (data[2] != "NotThing")
+            if (!data[2].equals("NotThing"))
             {
                 String[] a = StringTool.TakeString(data[2], '{', '}');
 
@@ -407,7 +407,7 @@ public class ChuonString {
                 }
             }
         }
-        else if (typ == "null")
+        else if (typ.equals("null"))
         {
             get = null;
         }

@@ -39,7 +39,7 @@ class TypeFormat {
     public static String ToTrueTypeName(String type)
     {
         String typenames = type;
-        if (Arrays.asList(typelist2).indexOf(type) == -1 && type != "null")
+        if (Arrays.asList(typelist2).indexOf(type) == -1 && !type.equals("null"))
         {
             typenames = typelist2[Arrays.asList(typelist).indexOf(type)];
         }
@@ -49,7 +49,7 @@ class TypeFormat {
     public static String ToJavaTrueTypeName(String type)
     {
         String typenames = type;
-        if (Arrays.asList(typelist3).indexOf(type) == -1 && type != "null")
+        if (Arrays.asList(typelist3).indexOf(type) == -1 && !type.equals("null"))
         {
             typenames = typelist3[Arrays.asList(typelist).indexOf(type)];
         }
@@ -59,7 +59,7 @@ class TypeFormat {
     public static String ToJavaScannrTrueTypeName(String type)
     {
         String typenames = type;
-        if (Arrays.asList(typelist4).indexOf(type) == -1 && type != "null")
+        if (Arrays.asList(typelist4).indexOf(type) == -1 && !type.equals("null"))
         {
             typenames = typelist4[Arrays.asList(typelist).indexOf(type)];
         }
@@ -69,7 +69,7 @@ class TypeFormat {
     public static String ToSimpleTypeName(String type)
     {
         String typenames = type;
-        if (Arrays.asList(typelist).indexOf(type) == -1 && type != "null")
+        if (Arrays.asList(typelist).indexOf(type) == -1 && !type.equals("null"))
         {
             typenames = typelist[Arrays.asList(typelist2).indexOf(type)];
         }
@@ -78,7 +78,7 @@ class TypeFormat {
 
     public static Class TypeNameToType(String typename) throws ClassNotFoundException
     {
-        return Class.forName((typename == "Map" ? "java.util.Hash" : (typename == "Decimal" ? "com.jimmiker." : "java.lang.")) + typename);
+        return Class.forName((typename.equals("Map") ? "java.util.Hash" : (typename.equals("Decimal") ? "com.jimmiker." : "java.lang.")) + typename);
     }
 
 	public static Object PrimitiveAndClassArray(Object inputArray)
@@ -91,7 +91,7 @@ class TypeFormat {
     	Object output = inputArray;
     	if(ChangeType.containsKey(name))
     	{
-    		if(inputArray.getClass().getSimpleName().replace(name, "") == "[][]")
+    		if(inputArray.getClass().getSimpleName().replace(name, "").equals("[][]"))
     		{
     			name = name += "[]";
     		}
