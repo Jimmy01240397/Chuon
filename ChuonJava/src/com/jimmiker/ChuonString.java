@@ -74,7 +74,7 @@ public class ChuonString {
 					@Override
 					public String run(Object... args) {
 	                    if ((boolean)args[1])
-	                        return (String)args[0] + BeforeFormatString(Array.get(thing, (int)args[2]).toString(), new char[] { '\'', '\"', '{', '}', '[', ']', ',', ':' }) + (String)args[0];
+	                        return (String)args[0] + StringTool.Escape(Array.get(thing, (int)args[2]).toString()) + (String)args[0];
 	                    else
 		                    return Array.get(thing, (int)args[2]).toString();
 					}
@@ -162,7 +162,7 @@ public class ChuonString {
 					@Override
 					public String run(Object... args) {
 	                    if ((boolean)args[1])
-	                        return (String)args[0] + BeforeFormatString(nowthing.toString(), new char[] { '\'', '\"', '{', '}', '[', ']', ',', ':' }) + (String)args[0];
+	                        return (String)args[0] + StringTool.Escape(nowthing.toString()) + (String)args[0];
 	                    else
 	                        return nowthing.toString();
 					}
@@ -268,12 +268,12 @@ public class ChuonString {
 		                        }
                             case "char":
                                 {
-                                    data = StringTool.TakeString(b[i], '\'', '\'')[0].charAt(0);
+                                    data = StringTool.Unescape(StringTool.TakeString(b[i], '\'', '\'')[0]).charAt(0);
                                     break;
                                 }
                             case "string":
                                 {
-                                    data = StringTool.TakeString(b[i], '\"', '\"')[0];
+                                    data = StringTool.Unescape(StringTool.TakeString(b[i], '\"', '\"')[0]);
                                     break;
                                 }
                             case "bool":
@@ -331,12 +331,12 @@ public class ChuonString {
                 }
             case "char":
                 {
-                    data = StringTool.TakeString(a, '\'', '\'')[0].charAt(0);
+                    data = StringTool.Unescape(StringTool.TakeString(a, '\'', '\'')[0]).charAt(0);
                     break;
                 }
             case "string":
                 {
-                    data = StringTool.TakeString(a, '\"', '\"')[0];
+                    data = StringTool.Unescape(StringTool.TakeString(a, '\"', '\"')[0]);
                     break;
                 }
             case "bool":
@@ -420,20 +420,6 @@ public class ChuonString {
             get = typ;
         }
         return get;
-    }
-
-    static String BeforeFormatString(String input, char[] a)
-    {
-        StringBuilder stringBuilder = new StringBuilder(input);
-        for (int i = 0; i < stringBuilder.length(); i++)
-        {
-            if (Arrays.asList(a).indexOf(stringBuilder.charAt(i)) >= 0 || stringBuilder.charAt(i) == '\\')
-            {
-                stringBuilder.insert(i, "\\");
-                i++;
-            }
-        }
-        return stringBuilder.toString();
     }
 
     static String printTab(boolean enable, int cont)

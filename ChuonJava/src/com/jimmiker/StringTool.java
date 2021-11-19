@@ -4,10 +4,83 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class StringTool {
+    final static char[] format = { '\t', '\n', '\r', '\f', '\'', '\"', '\\', '{', '}', '[', ']', ',', ':' };
+    final static char[] unformat = { 't', 'n', 'r', 'f' };
+	
     static int Matches(String input, char a)
     {
     	String[] j = SplitWithFormat(input, a);
         return j.length + 1;
+    }
+
+    public static String Escape(String input)
+    {
+        for (int i = 0; i < input.length(); i++)
+        {
+            if (IsMetachar(input.charAt(i)))
+            {
+                StringBuilder stringBuilder = new StringBuilder();
+                char c = input.charAt(i);
+                stringBuilder.append(input, 0, i);
+                do
+                {
+                    stringBuilder.append('\\');
+                    switch (c)
+                    {
+                        case '\t':
+                            c = 't';
+                            break;
+                        case '\n':
+                            c = 'n';
+                            break;
+                        case '\f':
+                            c = 'f';
+                            break;
+                        case '\r':
+                            c = 'r';
+                            break;
+                    }
+                    stringBuilder.append(c);
+                    i++;
+                    int num = i;
+                    while (i < input.length())
+                    {
+                        c = input.charAt(i);
+                        if (IsMetachar(c))
+                        {
+                            break;
+                        }
+                        i++;
+                    }
+                    stringBuilder.append(input, num, i);
+                }
+                while (i < input.length());
+                return stringBuilder.toString();
+            }
+        }
+        return input;
+    }
+
+    public static String Unescape(String input)
+    {
+        StringBuilder stringBuilder = new StringBuilder(input);
+        for (int i = 0; i < stringBuilder.length(); i++)
+        {
+            if (stringBuilder.charAt(i) == '\\')
+            {
+                stringBuilder.delete(i, i + 1);
+                if (Arrays.asList(unformat).contains(stringBuilder.charAt(i)))
+                {
+                    stringBuilder.setCharAt(i, format[Arrays.asList(unformat).indexOf(stringBuilder.charAt(i))]);;
+                }
+            }
+        }
+        return stringBuilder.toString();
+    }
+
+    static boolean IsMetachar(char ch)
+    {
+        return Arrays.asList(format).contains(ch);
     }
 
     public static String[] SplitWithFormat(String input, char a)
@@ -31,19 +104,6 @@ public class StringTool {
         return vs.toArray(outdata);
     }
 
-    public static String FormattingString(String input)
-    {
-        StringBuilder stringBuilder = new StringBuilder(input);
-        for (int i = 0; i < stringBuilder.length(); i++)
-        {
-            if (stringBuilder.charAt(i) == '\\')
-            {
-                stringBuilder.delete(i, 1);
-            }
-        }
-        return stringBuilder.toString();
-    }
-
     public static String[] TakeString(String text, Character a, Character b)
     {
         ArrayList<String> q = new ArrayList<String>(Arrays.asList(SplitWithFormat(text, b)));
@@ -56,10 +116,6 @@ public class StringTool {
             for (int i = 0; i < q.size(); i++)
             {
                 q.remove(i);
-            }
-            for (int i = 0; i < q.size(); i++)
-            {
-                q.set(i, FormattingString(q.get(i)));
             }
             String[] outdata = new String[q.size()];
             return q.toArray(outdata);
