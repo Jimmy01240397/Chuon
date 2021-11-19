@@ -118,7 +118,7 @@ public class ChuonBinary {
         String typename = thing.getClass().getSimpleName();
         writer.writeByte((byte)(Arrays.asList(TypeFormat.type).indexOf(typename)));
         writer.write(GetBytesLength(Array.getLength(thing)));
-        typename = StringTool.RemoveString(typename,"[", "]");
+        typename = StringTool.RemoveString(typename,"\\[", "\\]");
         thing = TypeFormat.PrimitiveAndClassArray(thing);
         if (typename == "Byte")
         {
@@ -278,7 +278,7 @@ public class ChuonBinary {
     {
     	Object d = null;
         int count = GetIntLength(reader);
-        typ = StringTool.RemoveString(typ, "[", "]");
+        typ = StringTool.RemoveString(typ, "\\[", "\\]");
         if (typ == "Byte")
         {
             d = new byte[count];
