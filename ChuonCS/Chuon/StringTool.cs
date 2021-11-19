@@ -8,11 +8,84 @@ namespace Chuon
 {
     public static class StringTool
     {
+        readonly static char[] format = { '\t', '\n', '\r', '\f', '\'', '\"', '\\', '{', '}', '[', ']', ',', ':' };
+        readonly static char[] unformat = { 't', 'n', 'r', 'f' };
+
         #region 字串處理
         static int Matches(string input, char a)
         {
             string[] j = SplitWithFormat(input, a);
             return j.Length + 1;
+        }
+
+        public static string Escape(string input)
+        {
+            for (int i = 0; i < input.Length; i++)
+            {
+                if (IsMetachar(input[i]))
+                {
+                    StringBuilder stringBuilder = new StringBuilder();
+                    char c = input[i];
+                    stringBuilder.Append(input, 0, i);
+                    do
+                    {
+                        stringBuilder.Append('\\');
+                        switch (c)
+                        {
+                            case '\t':
+                                c = 't';
+                                break;
+                            case '\n':
+                                c = 'n';
+                                break;
+                            case '\f':
+                                c = 'f';
+                                break;
+                            case '\r':
+                                c = 'r';
+                                break;
+                        }
+                        stringBuilder.Append(c);
+                        i++;
+                        int num = i;
+                        while (i < input.Length)
+                        {
+                            c = input[i];
+                            if (IsMetachar(c))
+                            {
+                                break;
+                            }
+                            i++;
+                        }
+                        stringBuilder.Append(input, num, i - num);
+                    }
+                    while (i < input.Length);
+                    return stringBuilder.ToString();
+                }
+            }
+            return input;
+        }
+
+        public static string Unescape(string input)
+        {
+            StringBuilder stringBuilder = new StringBuilder(input);
+            for (int i = 0; i < stringBuilder.Length; i++)
+            {
+                if (stringBuilder[i] == '\\')
+                {
+                    stringBuilder.Remove(i, 1);
+                    if (Array.IndexOf(unformat, stringBuilder[i]) != -1)
+                    {
+                        stringBuilder[i] = format[Array.IndexOf(unformat, stringBuilder[i])];
+                    }
+                }
+            }
+            return stringBuilder.ToString();
+        }
+
+        static bool IsMetachar(char ch)
+        {
+            return Array.IndexOf(format, ch) != -1;
         }
 
         public static string[] SplitWithFormat(string input, char a)
@@ -33,19 +106,6 @@ namespace Chuon
             }
             vs.Add(input.Substring(now, input.Length - now));
             return vs.ToArray();
-        }
-
-        static string FormattingString(string input)
-        {
-            StringBuilder stringBuilder = new StringBuilder(input);
-            for (int i = 0; i < stringBuilder.Length; i++)
-            {
-                if (stringBuilder[i] == '\\')
-                {
-                    stringBuilder.Remove(i, 1);
-                }
-            }
-            return stringBuilder.ToString();
         }
         #endregion
 
@@ -104,10 +164,6 @@ namespace Chuon
                 for (int i = 0; i < q.Count; i++)
                 {
                     q.RemoveAt(i);
-                }
-                for (int i = 0; i < q.Count; i++)
-                {
-                    q[i] = FormattingString(q[i]);
                 }
                 return q.ToArray();
             }

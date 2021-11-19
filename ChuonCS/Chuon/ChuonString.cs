@@ -71,7 +71,7 @@ namespace Chuon
                     string makestring(string leftright, bool isstringorchar, int index)
                     {
                         if (isstringorchar)
-                            return leftright + BeforeFormatString(c.GetValue(index).ToString(), new char[] { '\'', '\"', '{', '}', '[', ']', ',', ':' }) + leftright;
+                            return leftright + StringTool.Escape(c.GetValue(index).ToString()) + leftright;
                         else
                             return c.GetValue(index).ToString();
                     }
@@ -135,7 +135,7 @@ namespace Chuon
                     string makestring(string leftright, bool isstringorchar)
                     {
                         if (isstringorchar)
-                            return leftright + BeforeFormatString(thing.ToString(), new char[] { '\'', '\"', '{', '}', '[', ']', ',', ':' }) + leftright;
+                            return leftright + StringTool.Escape(thing.ToString()) + leftright;
                         else
                             return thing.ToString();
                     }
@@ -239,12 +239,12 @@ namespace Chuon
                             {
                                 case "char":
                                     {
-                                        data[0] = b[i].TakeString('\'', '\'')[0];
+                                        data[0] = StringTool.Unescape(b[i].TakeString('\'', '\'')[0]);
                                         break;
                                     }
                                 case "string":
                                     {
-                                        data[0] = b[i].TakeString('\"', '\"')[0];
+                                        data[0] = StringTool.Unescape(b[i].TakeString('\"', '\"')[0]);
                                         break;
                                     }
                                 case "bool":
@@ -279,12 +279,12 @@ namespace Chuon
             {
                 case "char":
                     {
-                        a = a.TakeString('\'', '\'')[0];
+                        a = StringTool.Unescape(a.TakeString('\'', '\'')[0]);
                         break;
                     }
                 case "string":
                     {
-                        a = a.TakeString('\"', '\"')[0];
+                        a = StringTool.Unescape(a.TakeString('\"', '\"')[0]);
                         break;
                     }
                 case "bool":
@@ -378,21 +378,6 @@ namespace Chuon
             return get;
         }
         #endregion
-
-
-        static string BeforeFormatString(string input, char[] a)
-        {
-            StringBuilder stringBuilder = new StringBuilder(input);
-            for (int i = 0; i < stringBuilder.Length; i++)
-            {
-                if (Array.IndexOf(a, stringBuilder[i]) != -1 || stringBuilder[i] == '\\')
-                {
-                    stringBuilder.Insert(i, "\\");
-                    i++;
-                }
-            }
-            return stringBuilder.ToString();
-        }
 
         static string printTab(bool enable, int cont)
         {
