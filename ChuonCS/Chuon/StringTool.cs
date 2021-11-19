@@ -30,21 +30,10 @@ namespace Chuon
                     do
                     {
                         stringBuilder.Append('\\');
-                        switch (c)
+                        if(Array.IndexOf(format, c) < unformat.Length)
                         {
-                            case '\t':
-                                c = 't';
-                                break;
-                            case '\n':
-                                c = 'n';
-                                break;
-                            case '\f':
-                                c = 'f';
-                                break;
-                            case '\r':
-                                c = 'r';
-                                break;
-                        }
+                            c = unformat[Array.IndexOf(format, c)];
+                        }    
                         stringBuilder.Append(c);
                         i++;
                         int num = i;

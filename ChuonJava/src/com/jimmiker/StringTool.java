@@ -25,21 +25,10 @@ public class StringTool {
                 do
                 {
                     stringBuilder.append('\\');
-                    switch (c)
+                    if(Arrays.asList(format).indexOf(c) < unformat.length)
                     {
-                        case '\t':
-                            c = 't';
-                            break;
-                        case '\n':
-                            c = 'n';
-                            break;
-                        case '\f':
-                            c = 'f';
-                            break;
-                        case '\r':
-                            c = 'r';
-                            break;
-                    }
+                        c = unformat[Arrays.asList(format).indexOf(c)];
+                    }    
                     stringBuilder.append(c);
                     i++;
                     int num = i;
