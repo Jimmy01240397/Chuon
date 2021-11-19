@@ -194,7 +194,7 @@ public class ChuonString {
     static Object StringToObjectForArray(String thing) throws Exception
     {
         String[] vs = StringTool.SplitWithFormat(thing, ':');
-        String typ =StringTool.RemoveString(vs[0], " ", "\n", "\r", "\t", "[", "]");
+        String typ =StringTool.RemoveString(vs[0], " ", "\n", "\r", "\t", "\\[", "\\]");
 
         String typenames = TypeFormat.ToJavaTrueTypeName(typ);
 
@@ -306,7 +306,7 @@ public class ChuonString {
     static Object StringToObjectForNotArray(String thing) throws Exception
     {
     	String[] vs = StringTool.SplitWithFormat(thing, ':');
-    	String typ = StringTool.RemoveString(vs[0], " ", "\n", "\r", "\t", "[", "]");
+    	String typ = StringTool.RemoveString(vs[0], " ", "\n", "\r", "\t", "\\[", "\\]");
 
     	String typenames = TypeFormat.ToJavaTrueTypeName(typ);
 
