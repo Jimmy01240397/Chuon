@@ -2,6 +2,29 @@
 Chummy Object Notation is a data interchange format and a serialization format that uses human-readable text to store and transmit data objects consisting of attribute-value pairs and arrays (or other serializable values). 
 Or it can use the most suitable serialization format to serialize data objects consisting of attribute-value pairs and arrays (or other serializable values).
 
+* [Binary Format](#binary-format)
+  * [Base 128](#base-128)
+  * [data binary length](#data-binary-length)
+* [String Format](#string-format)
+  * [byte](#byte)
+  * [sbyte](#sbyte)
+  * [short](#short)
+  * [int](#int)
+  * [long](#long)
+  * [ushort](#ushort)
+  * [uint](#uint)
+  * [ulong](#ulong)
+  * [float](#float)
+  * [double](#double)
+  * [decimal](#decimal)
+  * [char](#char)
+  * [string](#string)
+  * [bool](#bool)
+  * [object](#object)
+  * [Dictionary](#dictionary)
+* [Usage](#usage)
+* [Example](#example)
+
 ## Binary Format
 
 | type | length(if it is Array) | data |
@@ -39,7 +62,7 @@ If first byte is Greater than 128 than the number is:
 | object     | data_type_length + data_length_length(if it is Array) + data_length bytes    |
 | Dictionary     | key_type_length + data_type_length + length_length + (key_type_length + length(if it is Array) + key_length + data_type_length + length(if it is Array) + data_length)... bytes     |
 
-## Usage
+## String Format
 There are the types that you can use.
 * byte 
 * sbyte 
@@ -61,23 +84,23 @@ There are the types that you can use.
 Arrays can be used except for Dictionary and object[](it is already an array)
 
 ### byte
-``` C
+``` C#
 byte:<number>
 ```
 
 #### Array
-``` C
+``` C#
 byte[]:
 {
 	<Hex(don't add 0x)>
 }
 ```
 ### sbyte
-``` C
+``` C#
 sbyte:<number between -128~127>
 ```
 #### Array
-``` C
+``` C#
 sbyte[]:
 {
 	-55,
@@ -87,11 +110,11 @@ sbyte[]:
 }
 ```
 ### short
-``` C
+``` C#
 short:<number>
 ```
 #### Array
-``` C
+``` C#
 short[]:
 {
 	10000,
@@ -99,11 +122,11 @@ short[]:
 }
 ```
 ### int
-``` C
+``` C#
 int:<number>
 ```
 #### Array
-``` C
+``` C#
 int[]:
 {
 	100000000,
@@ -111,11 +134,11 @@ int[]:
 }
 ```
 ### long
-``` C
+``` C#
 long:<number>
 ```
 #### Array
-``` C
+``` C#
 long[]:
 {
 	1000000000000000000,
@@ -123,11 +146,11 @@ long[]:
 }
 ```
 ### ushort
-``` C
+``` C#
 ushort:<number>
 ```
 #### Array
-``` C
+``` C#
 ushort[]:
 {
 	10000,
@@ -135,11 +158,11 @@ ushort[]:
 }
 ```
 ### uint
-``` C
+``` C#
 uint:<number>
 ```
 #### Array
-``` C
+``` C#
 uint[]:
 {
 	100000000,
@@ -147,11 +170,11 @@ uint[]:
 }
 ```
 ### ulong
-``` C
+``` C#
 ulong:<number>
 ```
 #### Array
-``` C
+``` C#
 ulong[]:
 {
 	1000000000000000000,
@@ -159,11 +182,11 @@ ulong[]:
 }
 ```
 ### float
-``` C
+``` C#
 float:<floating-point number>
 ```
 #### Array
-``` C
+``` C#
 float[]:
 {
 	5.5555,
@@ -171,11 +194,11 @@ float[]:
 }
 ```
 ### double
-``` C
+``` C#
 double:<floating-point number>
 ```
 #### Array
-``` C
+``` C#
 double[]:
 {
 	5.55555555555,
@@ -183,11 +206,11 @@ double[]:
 }
 ```
 ### decimal
-``` C
+``` C#
 decimal:<floating-point number>
 ```
 #### Array
-``` C
+``` C#
 decimal[]:
 {
 	5.55555555555,
@@ -195,11 +218,11 @@ decimal[]:
 }
 ```
 ### char
-``` C
+``` C#
 char:'<character>'
 ```
 #### Array
-``` C
+``` C#
 char[]:
 {
 	'a',
@@ -207,11 +230,11 @@ char[]:
 }
 ```
 ### string
-``` C
+``` C#
 string:"<string>"
 ```
 #### Array
-``` C
+``` C#
 string[]:
 {
 	"Hello World",
@@ -219,11 +242,11 @@ string[]:
 }
 ```
 ### bool
-``` C
+``` C#
 bool:<boolean>
 ```
 #### Array
-``` C
+``` C#
 bool[]:
 {
 	true,
@@ -231,7 +254,7 @@ bool[]:
 }
 ```
 ### object[]
-``` C
+``` C#
 object[]:
 {
     int:55,
@@ -244,7 +267,7 @@ object[]:
 }
 ```
 ### Dictionary
-``` C
+``` C#
 Dictionary:
 {
     <key type>:<data type>:
@@ -259,7 +282,7 @@ Dictionary:
 }
 ```
 
-## In Code
+## Usage
 ### use Chuon
 #### C#
 ``` C#
