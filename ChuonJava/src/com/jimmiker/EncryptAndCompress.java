@@ -284,7 +284,7 @@ public class EncryptAndCompress
 			}
 		};
 
-        if (key != null && key != "")
+        if (key != null && !key.equals(""))
         {
             switch (_Lock)
             {

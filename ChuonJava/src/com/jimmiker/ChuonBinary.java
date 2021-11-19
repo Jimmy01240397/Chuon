@@ -118,36 +118,36 @@ public class ChuonBinary {
         String typename = thing.getClass().getSimpleName();
         writer.writeByte((byte)(Arrays.asList(TypeFormat.type).indexOf(typename)));
         writer.write(GetBytesLength(Array.getLength(thing)));
-        typename = StringTool.RemoveString(typename,"[", "]");
+        typename = StringTool.RemoveString(typename,"\\[", "\\]");
         thing = TypeFormat.PrimitiveAndClassArray(thing);
-        if (typename == "Byte")
+        if (typename.equals("Byte"))
         {
             byte[] c = (byte[])thing;
             writer.write(c);
         }
-        else if(typename == "Character" || typename == "Boolean")
+        else if(typename.equals("Character") || typename.equals("Boolean"))
         {
         	Class nowtype = Class.forName("java.lang." + typename);
-        	Method bufferput = DataOutputStream.class.getMethod("write" + TypeFormat.type3[Arrays.asList(TypeFormat.type).indexOf(typename)], typename == "Character" ? int.class : boolean.class);
+        	Method bufferput = DataOutputStream.class.getMethod("write" + TypeFormat.type3[Arrays.asList(TypeFormat.type).indexOf(typename)], typename.equals("Character") ? int.class : boolean.class);
             for (int i = 0; i < Array.getLength(thing); i++)
             {
             	bufferput.invoke(writer, Array.get(thing, i));
             }
 		}
-        else if(typename == "Object" || typename == "Decimal" || typename == "String")
+        else if(typename.equals("Object") || typename.equals("Decimal") || typename.equals("String"))
         {
             for (int i = 0; i < Array.getLength(thing); i++)
             {
-                if (typename == "Object")
+                if (typename.equals("Object"))
                 {
                     writer.close();
                     Typing(stream, Array.get(thing, i));
                     writer = new DataOutputStream(stream);
                 }
-                else if (typename == "Decimal") {
+                else if (typename.equals("Decimal")) {
                 	writer.write(TypeFormat.ArrayReverse(((Decimal)Array.get(thing, i)).toByteArray()));
 				}
-                else if (typename == "String") 
+                else if (typename.equals("String"))
                 {
                 	byte[] nowdata = null;
                 	switch (typename) 
@@ -181,12 +181,12 @@ public class ChuonBinary {
     	DataOutputStream writer = new DataOutputStream(stream);
         writer.writeByte((byte)(Arrays.asList(TypeFormat.type).indexOf(typename)));
 
-        if (typename == "Byte" || typename == "Character" || typename == "Boolean")
+        if (typename.equals("Byte") || typename.equals("Character") || typename.equals("Boolean"))
         {
-        	Method bufferput = DataOutputStream.class.getMethod("write" + TypeFormat.type3[Arrays.asList(TypeFormat.type).indexOf(typename)], typename == "Byte" || typename == "Character" ? int.class : boolean.class);
+        	Method bufferput = DataOutputStream.class.getMethod("write" + TypeFormat.type3[Arrays.asList(TypeFormat.type).indexOf(typename)], typename.equals("Byte") || typename.equals("Character") ? int.class : boolean.class);
             bufferput.invoke(writer, thing);
         }
-        else if(typename == "String")
+        else if(typename.equals("String"))
         {
         	byte[] nowdata = null;
         	switch (typename) 
@@ -199,7 +199,7 @@ public class ChuonBinary {
 			}
     		writer.write(byteSerialize(nowdata));
         }
-        else if (typename == "Decimal") {
+        else if (typename.equals("Decimal")) {
         	writer.write(TypeFormat.ArrayReverse(((Decimal)thing).toByteArray()));
 		}
         else {
@@ -223,7 +223,7 @@ public class ChuonBinary {
         	{
         		TypingArray(stream, thing);
         	}
-        	else if (typename == "Map") {
+        	else if (typename.equals("Map")) {
                 Map c = (Map)thing;
                 Class datatype = thing.getClass();
                 Object[][] data = new Object[][] {c.keySet().toArray(), c.values().toArray()} ;
@@ -278,14 +278,14 @@ public class ChuonBinary {
     {
     	Object d = null;
         int count = GetIntLength(reader);
-        typ = StringTool.RemoveString(typ, "[", "]");
-        if (typ == "Byte")
+        typ = StringTool.RemoveString(typ, "\\[", "\\]");
+        if (typ.equals("Byte"))
         {
             d = new byte[count];
             reader.read((byte[])d, 0, ((byte[])d).length);
             return d;
         }
-        else if (typ == "Character" || typ == "Boolean") 
+        else if (typ.equals("Character") || typ.equals("Boolean"))
         {
         	Method bufferread = DataInputStream.class.getMethod("read" + TypeFormat.type3[Arrays.asList(TypeFormat.type).indexOf(typ)]);
             d = Array.newInstance(TypeFormat.TypeNameToType(typ), count);
@@ -294,22 +294,22 @@ public class ChuonBinary {
             	Array.set(d, i, bufferread.invoke(reader));
             }
         }
-        else if(typ == "Object" || typ == "Decimal" || typ == "String")
+        else if(typ.equals("Object") || typ.equals("Decimal") || typ.equals("String"))
         {
             d = Array.newInstance(TypeFormat.TypeNameToType(typ), count);
             for (int i = 0; i < count; i++)
             {
-                if (typ == "Object")
+                if (typ.equals("Object"))
                 {
 	            	Array.set(d, i, GetTyp(reader));
                 }
-                else if (typ == "Decimal")
+                else if (typ.equals("Decimal"))
                 {
                 	byte[] nowdata = new byte[16];
                 	reader.read(nowdata, 0, nowdata.length);
                 	Array.set(d, i, new Decimal(TypeFormat.ArrayReverse(nowdata)));
                 }
-                else if (typ == "String") 
+                else if (typ.equals("String"))
                 {
                 	int size = GetIntLength(reader);
                 	byte[] nowdata = new byte[size];
@@ -344,12 +344,12 @@ public class ChuonBinary {
     static Object GetTypNotArray(String typ, DataInputStream reader) throws Exception
     {
     	Object d = null;
-        if (typ == "Byte" || typ == "Character" || typ == "Boolean")
+        if (typ.equals("Byte") || typ.equals("Character") || typ.equals("Boolean"))
         {
         	Method bufferread = DataInputStream.class.getMethod("read" + TypeFormat.type3[Arrays.asList(TypeFormat.type).indexOf(typ)]);
             d = bufferread.invoke(reader);
         }
-        else if(typ == "String")
+        else if(typ.equals("String"))
         {
         	int size = GetIntLength(reader);
         	byte[] nowdata = new byte[size];
@@ -363,7 +363,7 @@ public class ChuonBinary {
 				}
 			}
         }
-        else if (typ == "Decimal") {
+        else if (typ.equals("Decimal")) {
         	byte[] nowdata = new byte[16];
         	reader.read(nowdata, 0, nowdata.length);
         	d = new Decimal(TypeFormat.ArrayReverse(nowdata));
@@ -393,7 +393,7 @@ public class ChuonBinary {
             {
                 get = GetTypArray(typ, reader);
             }
-            else if (typ == "Map")
+            else if (typ.equals("Map"))
             {
                 String[] typenames = new String[] { TypeFormat.type[reader.readByte()], TypeFormat.type[reader.readByte()] };
                 Map d = new HashMap();
@@ -406,7 +406,7 @@ public class ChuonBinary {
                 }
                 get = d;
             }
-            else if (typ == "null")
+            else if (typ.equals("null"))
             {
                 boolean a = reader.readBoolean();
                 get = null;

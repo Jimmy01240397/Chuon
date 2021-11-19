@@ -67,7 +67,7 @@ public class StringTool {
         q.remove(q.size() - 1);
         for (int i = 0; i < q.size();)
         {
-            if (q.get(i) != "")
+            if (!q.get(i).equals(""))
             {
                 if (Matches(q.get(i), a) != Matches(q.get(i), b) + 1)
                 {
