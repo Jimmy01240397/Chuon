@@ -167,6 +167,8 @@ namespace ChounTranslator
         {
             try
             {
+                object x = new ChuonBinary(StringTool.HexToBytes(richTextBox1.Text)).ToObject();
+                string aaa = new ChuonString(new ChuonBinary(StringTool.HexToBytes(richTextBox1.Text)).ToObject()).ToString();
                 ChuonBinary vs = new ChuonBinary(StringTool.HexToBytes(richTextBox1.Text));
                 richTextBox2.Text = vs.ToChuonString().ToStringWithEnter();
             }
@@ -180,6 +182,7 @@ namespace ChounTranslator
         {
             try
             {
+                string aaa = StringTool.BytesToHex(new ChuonBinary(new ChuonString(richTextBox2.Text).ToObject()).ToArray());
                 richTextBox1.Text = StringTool.BytesToHex(new ChuonString(richTextBox2.Text).ToChuonBinary().ToArray());
             }
             catch (Exception ee)

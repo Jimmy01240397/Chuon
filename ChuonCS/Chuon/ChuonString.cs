@@ -13,24 +13,68 @@ namespace Chuon
         string data = "";
         public ChuonString(object thing)
         {
-            data = ObjectSerializeToChuonString(thing);
+            int rank = TypeFormat.ArrayRank(out Type basetype, ref thing);
+            TypeFormat.typing nowtypedata = TypeFormat.Instance[basetype];
+
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.Append(nowtypedata.name);
+            for(int i = 0; i < rank; i++)
+            {
+                stringBuilder.Append("[]");
+            }
+            stringBuilder.Append(":");
+            stringBuilder.Append(Typing(nowtypedata, thing, rank));
+            data = stringBuilder.ToString();
         }
 
         public ChuonString(string thing)
         {
             data = thing;
-            data = ObjectSerializeToChuonString(ToObject());
+            object test = ToObject();
+            data = new ChuonString(test).ToString();
         }
 
         public ChuonString(byte[] thing, Encoding encoding)
         {
             data = encoding.GetString(thing);
-            data = ObjectSerializeToChuonString(ToObject());
+            data = new ChuonString(ToObject()).ToString();
         }
 
         public object ToObject()
         {
-            return ChuonStringDeserializeToObject(data);
+            object output = null;
+            string[] splitdata = StringTool.SplitWithFormatWithoutinArray(data, ':');
+            string type = splitdata[0].RemoveString(" ", "\n", "\r", "\t");
+            string basetype = type.RemoveString("[]");
+            int rank = type.TakeString('[', ']').Length;
+            TypeFormat.typing nowtypedata = TypeFormat.Instance[basetype];
+            string alldata = splitdata[1];
+            if (rank > 0)
+            {
+                alldata = splitdata[1].TakeString('{', '}')[0];
+            }
+            output = GetTyp(nowtypedata, rank, alldata);
+            return output;
+        }
+
+        public ChuonBinary ToChuonBinary()
+        {
+            string[] splitdata = StringTool.SplitWithFormatWithoutinArray(data, ':');
+            string type = splitdata[0].RemoveString(" ", "\n", "\r", "\t");
+            string basetype = type.RemoveString("[]");
+            int rank = type.TakeString('[', ']').Length;
+            TypeFormat.typing nowtypedata = TypeFormat.Instance[basetype];
+            string allstringdata = splitdata[1];
+            if (rank > 0)
+            {
+                allstringdata = splitdata[1].TakeString('{', '}')[0];
+            }
+            byte[] alldata = ChuonBinaryTyping(nowtypedata, rank, allstringdata);
+            byte[] ans = new byte[alldata.Length + 2];
+            ans[0] = nowtypedata.index;
+            ans[1] = (byte)rank;
+            alldata.CopyTo(ans, 2);
+            return new ChuonBinary(ans);
         }
 
         public override string ToString()
@@ -40,351 +84,171 @@ namespace Chuon
 
         public string ToStringWithEnter()
         {
-            return ObjectSerializeToChuonStringWithEnter(ToObject());
+            StringBuilder ans = new StringBuilder();
+            int last = 0;
+            for(int i = 0, tab = 0; i < data.Length; i++)
+            {
+                switch(data[i])
+                {
+                    case '\\':
+                        {
+                            i++;
+                            break;
+                        }
+                    case ',':
+                        {
+                            ans.Append(data.Substring(last, i - last + 1) + printTab(tab));
+                            last = i + 1;
+                            break;
+                        }
+                    case '{':
+                        {
+                            if(data[i - 1] == '}' || data[i - 1] == ':') ans.Append(data.Substring(last, i - last) + printTab(tab));
+                            last = i;
+                            tab++;
+                            ans.Append(data.Substring(last, i - last + 1) + printTab(tab));
+                            last++;
+                            break;
+                        }
+                    case '}':
+                        {
+                            tab--;
+                            ans.Append(data.Substring(last, i - last) + printTab(tab));
+                            last = i;
+                            ans.Append(data.Substring(last, i - last + 1));
+                            last++;
+                            break;
+                        }
+                }
+            }
+            ans.Append(data.Substring(last, data.Length - last));
+            return ans.ToString();
         }
 
         public byte[] ToBinaryArray(Encoding encoding)
         {
             return encoding.GetBytes(data);
         }
-        public ChuonBinary ToChuonBinary()
-        {
-            object datas = ToObject();
-            return new ChuonBinary(datas);
-        }
 
-        #region ObjectToString
-        static string ObjectToStringForArray(int cont, object thing, bool enter)
+        internal static string Typing(TypeFormat.typing nowtypedata, object thing, int rank)
         {
-            Array c = (Array)thing;
-            string type = TypeFormat.typelist[Array.IndexOf(TypeFormat.typelist2, thing.GetType().Name)];
-            string a = "";
-            if (c.Length > 0)
+            if (thing == null) return "null";
+            StringBuilder ans = new StringBuilder();
+            if (rank > 0) ans.Append("{");
+            if (rank >= nowtypedata.AllSerializationFunc.Length)
             {
-                a += printTab(enter, cont) + "{" + printTab(enter, cont + 1);
-                if (type == "byte[]")
+                if (rank > 0)
                 {
-                    a += StringTool.BytesToHex((byte[])c) + printTab(enter, cont) + "}";
-                }
-                else
-                {
-                    string makestring(string leftright, bool isstringorchar, int index)
+                    for (int i = 0; i < ((Array)thing).Length; i++)
                     {
-                        if (isstringorchar)
-                            return leftright + StringTool.Escape(c.GetValue(index).ToString()) + leftright;
-                        else
-                            return c.GetValue(index).ToString();
+                        string thingdata = Typing(nowtypedata, ((Array)thing).GetValue(i), rank - 1);
+                        ans.Append(thingdata + ",");
                     }
-                    for (int i = 0; i < c.Length - 1; i++)
-                    {
-                        if (type == "object[]")
-                            a += ObjectToString(cont + 1, c.GetValue(i), enter) + "," + printTab(enter, cont + 1);
-                        else
-                            a += makestring(type == "char[]" ? "\'" : "\"", type == "char[]" || type == "string[]", i) + "," + printTab(enter, cont + 1);
-                    }
-                    if (type == "object[]")
-                        a += ObjectToString(cont + 1, c.GetValue(c.Length - 1), enter) + printTab(enter, cont) + "}";
-                    else
-                        a += makestring(type == "char[]" ? "\'" : "\"", type == "char[]" || type == "string[]", c.Length - 1) + printTab(enter, cont) + "}";
+                    if(ans[ans.Length - 1] == ',')
+                        ans.Remove(ans.Length - 1, 1);
                 }
             }
             else
             {
-                a += "NotThing";
+                ans.Append(nowtypedata.AllSerializationFunc[rank].DataToString(thing));
             }
-            return a;
+            if (rank > 0) ans.Append("}");
+            return ans.ToString();
         }
 
-        static string ObjectToString(int cont, object thing, bool enter)
+        internal static object GetTyp(TypeFormat.typing nowtypedata, int rank, string nowdata)
         {
-            string a = "";
-            if (thing != null)
+            Type nowtype = nowtypedata.type;
+            object ans = null;
+            if (nowdata.RemoveString(" ", "\n", "\r", "\t") == "null") return null;
+            if (rank >= nowtypedata.AllSerializationFunc.Length)
             {
-                string typ = TypeFormat.typelist[Array.IndexOf(TypeFormat.typelist2, thing.GetType().Name)];
-                a += typ + ":";
-                if (typ.Contains("[]"))
+                if (rank > 0)
                 {
-                    a += ObjectToStringForArray(cont, thing, enter);
-                }
-                else if (typ == "Dictionary")
-                {
-                    Type datatype = thing.GetType();
-                    Type[] Subdatatype = datatype.GetGenericArguments();
-                    IDictionary c = (IDictionary)thing;
-                    a += printTab(enter, cont) + "{" + printTab(enter, cont + 1) + TypeFormat.typelist[Array.IndexOf(TypeFormat.typelist2, Subdatatype[0].Name)] + ":" + TypeFormat.typelist[Array.IndexOf(TypeFormat.typelist2, Subdatatype[1].Name)] + ":";
-
-                    if (c.Count > 0)
+                    for (int i = 0; i < rank - 1; i++)
                     {
-                        Array keys = Array.CreateInstance(Subdatatype[0], c.Keys.Count);
-                        Array values = Array.CreateInstance(Subdatatype[1], c.Values.Count);
-                        c.Keys.CopyTo(keys, 0);
-                        c.Values.CopyTo(values, 0);
-                        for (int i = 0; i < c.Count; i++)
+                        nowtype = nowtype.MakeArrayType();
+                    }
+                    string[] alldata = StringTool.SplitWithFormatWithoutinArray(nowdata, ',');
+                    ans = Array.CreateInstance(nowtype, alldata.Length);
+                    for (int i = 0; i < alldata.Length; i++)
+                    {
+                        if (alldata[i].RemoveString(" ", "\n", "\r", "\t") == "null")
+                            ((Array)ans).SetValue(null, i);
+                        else
                         {
-                            a += printTab(enter, cont + 1) + "{" + printTab(enter, cont + 2) + ObjectToString(cont + 2, keys.GetValue(i), enter) + "," + printTab(enter, cont + 2) + ObjectToString(cont + 2, values.GetValue(i), enter) + printTab(enter, cont + 1) + "}";
+                            if (rank - 1 > 0) alldata[i] = alldata[i].TakeString('{', '}')[0];
+                            ((Array)ans).SetValue(GetTyp(nowtypedata, rank - 1, alldata[i]), i);
                         }
                     }
-                    else
-                    {
-                        a += "NotThing";
-                    }
-                    a += printTab(enter, cont) + "}";
-                }
-                else if (Array.IndexOf(TypeFormat.typelist, typ) != -1)
-                {
-                    string makestring(string leftright, bool isstringorchar)
-                    {
-                        if (isstringorchar)
-                            return leftright + StringTool.Escape(thing.ToString()) + leftright;
-                        else
-                            return thing.ToString();
-                    }
-                    a += makestring(typ == "char" ? "\'" : "\"", typ == "char" || typ == "string");
-                }
-                else
-                {
-                    a += thing.ToString();
                 }
             }
             else
             {
-                a += "null";
+                ans = nowtypedata.AllSerializationFunc[rank].StringToData(nowdata);
             }
-            return a;
+            return ans;
         }
 
-        /// <summary>
-        /// object Format to SerializationData Text
-        /// </summary>
-        /// <param name="thing">object need to Format</param>
-        /// <returns>SerializationData Text</returns>
-        static string ObjectSerializeToChuonString(object thing)
+        internal static byte[] ChuonBinaryTyping(TypeFormat.typing nowtypedata, int rank, string nowdata)
         {
-            return ObjectToString(0, thing, false);
-        }
-
-        /// <summary>
-        /// object Format to SerializationData Text with Wrap
-        /// </summary>
-        /// <param name="thing">object need to Format</param>
-        /// <returns>SerializationData Text</returns>
-        static string ObjectSerializeToChuonStringWithEnter(object thing)
-        {
-            return ObjectToString(0, thing, true);
-        }
-        #endregion
-
-        #region StringToObject
-        static object StringToObjectForArray(string thing)
-        {
-            string[] vs = StringTool.SplitWithFormat(thing, ':');
-            string typ = vs[0].RemoveString(" ", "\n", "\r", "\t", "[", "]");
-
-            string typenames = TypeFormat.ToTrueTypeName(typ);
-            Type[] types = new Type[] { TypeFormat.TypeNameToType(typenames) };
-
-            int found = thing.IndexOf(':');
-            if (thing.Substring(found + 1) != "NotThing")
+            byte[] ans = null;
+            if (rank >= nowtypedata.AllSerializationFunc.Length)
             {
-                string a = thing.Substring(found + 1).TakeString('{', '}')[0];
-
-                if (typ == "byte")
+                if (rank > 0)
                 {
-                    a = a.Replace(" ", "");
-                    return StringTool.HexToBytes(a);
-                }
-                else
-                {
-                    string[] b = null;
-                    if (typ == "object")
+                    using (MemoryStream stream = new MemoryStream())
+                    using (BinaryWriter writer = new BinaryWriter(stream))
                     {
-                        b = a.TakeString('{', '}');
-                        for (int i = 0; i < b.Length; i++)
+                        string[] alldata = StringTool.SplitWithFormatWithoutinArray(nowdata, ',');
+                        byte[] len = TypeFormat.GetBytesLength(alldata.Length);
+
+                        writer.Write(len, 0, len.Length);
+                        if ((rank > 1 || nowtypedata.cannull) && alldata.Length > 0)
                         {
-                            int index = a.IndexOf("{" + b[i] + "}");
-                            a = a.Substring(0, index) + "[" + i + "]" + a.Substring(index + b[i].Length + 2);
-                        }
-                        string[] bb = StringTool.SplitWithFormat(a, ',');
-                        for (int i = 0; i < bb.Length; i++)
-                        {
-                            for (int ii = 0; ii < b.Length; ii++)
+                            byte nullbool = 0;
+                            for (int i = 0; i < alldata.Length; i++)
                             {
-                                bb[i] = bb[i].Replace("[" + ii + "]", "{" + b[ii] + "}");
+                                if (i % 8 == 0)
+                                {
+                                    if (i != 0)
+                                    {
+                                        writer.Write(nullbool);
+                                    }
+                                    nullbool = 0;
+                                }
+                                nullbool <<= 1;
+                                if (alldata[i] == "null")
+                                {
+                                    nullbool++;
+                                }
+                            }
+                            writer.Write(nullbool);
+                        }
+
+                        for (int i = 0; i < alldata.Length; i++)
+                        {
+                            if (rank - 1 > 0) if (alldata[i] != "null") alldata[i] = alldata[i].TakeString('{', '}')[0];
+                            if (!(rank > 1 || nowtypedata.cannull) || alldata[i] != "null")
+                            {
+                                writer.Write(ChuonBinaryTyping(nowtypedata, rank - 1, alldata[i]));
                             }
                         }
-                        b = bb;
+                        writer.Close();
+                        stream.Close();
+                        ans = stream.ToArray();
                     }
-                    else
-                    {
-                        b = StringTool.SplitWithFormat(a, ',');
-                    }
-
-                    Type thistype = typeof(List<>).MakeGenericType(types);
-                    IList c = (IList)Activator.CreateInstance(thistype);
-                    System.Reflection.MethodInfo toarray = thistype.GetMethod("ToArray");
-
-                    if (typ == "object")
-                    {
-                        for (int i = 0; i < b.Length; i++)
-                        {
-                            c.Add(ChuonStringDeserializeToObject(b[i]));
-                        }
-                    }
-                    else
-                    {
-                        for (int i = 0; i < b.Length; i++)
-                        {
-                            object[] data = new object[] { b[i] };
-                            switch (typ)
-                            {
-                                case "char":
-                                    {
-                                        data[0] = StringTool.Unescape(b[i].TakeString('\'', '\'')[0]);
-                                        break;
-                                    }
-                                case "string":
-                                    {
-                                        data[0] = StringTool.Unescape(b[i].TakeString('\"', '\"')[0]);
-                                        break;
-                                    }
-                                case "bool":
-                                    {
-                                        data[0] = b[i].Replace(" ", "");
-                                        break;
-                                    }
-                            }
-                            System.Reflection.MethodInfo method = typeof(Convert).GetMethod("To" + types[0].Name, new Type[] { typeof(string) });
-                            c.Add(method.Invoke(null, data));
-                        }
-                    }
-                    return toarray.Invoke(c, null);
                 }
             }
             else
             {
-                return Array.CreateInstance(types[0], 0);
+                ans = nowtypedata.AllSerializationFunc[rank].StringToBinary(nowdata);
             }
+            return ans;
         }
 
-        static object StringToObjectForNotArray(string thing)
+        static string printTab(int cont)
         {
-            string[] vs = StringTool.SplitWithFormat(thing, ':');
-            string typ = vs[0].RemoveString(" ", "\n", "\r", "\t", "[", "]");
-
-            string typenames = TypeFormat.ToTrueTypeName(typ);
-
-            int found = thing.IndexOf(':');
-            string a = thing.Substring(found + 1);
-            switch (typ)
-            {
-                case "char":
-                    {
-                        a = StringTool.Unescape(a.TakeString('\'', '\'')[0]);
-                        break;
-                    }
-                case "string":
-                    {
-                        a = StringTool.Unescape(a.TakeString('\"', '\"')[0]);
-                        break;
-                    }
-                case "bool":
-                    {
-                        a = a.Replace(" ", "");
-                        break;
-                    }
-            }
-            System.Reflection.MethodInfo method = typeof(Convert).GetMethod("To" + TypeFormat.TypeNameToType(typenames).Name, new Type[] { typeof(string) });
-            object[] data = new object[] { a };
-            object get = method.Invoke(null, data);
-            if (typ == "byte")
-            {
-                get = (byte)get;
-            }
-            return get;
-        }
-
-        /// <summary>
-        /// SerializationData Text to object
-        /// </summary>
-        /// <param name="thing">SerializationData Text</param>
-        /// <returns>object</returns>
-        static object ChuonStringDeserializeToObject(string thing)
-        {
-            string[] vs = StringTool.SplitWithFormat(thing, ':');
-            string typ = TypeFormat.ToSimpleTypeName(vs[0].RemoveString(" ", "\n", "\r", "\t"));
-            object get;
-            if (typ.Contains("[]"))
-            {
-                get = StringToObjectForArray(thing);
-            }
-            else if (typ == "Dictionary")
-            {
-                int found = thing.IndexOf(':');
-                string _data = thing.Substring(found + 1).TakeString('{', '}')[0];
-
-                int data_index = _data.IndexOf(':');
-                int data_index2 = _data.IndexOf(':', data_index + 1);
-
-                string[] data = new string[] { _data.Substring(0, data_index), _data.Substring(data_index + 1, data_index2 - data_index - 1), _data.Substring(data_index2 + 1) };
-                data[0] = data[0].RemoveString(" ", "\n", "\r", "\t");
-                data[1] = data[1].RemoveString(" ", "\n", "\r", "\t");
-                string[] typenames = new string[] { TypeFormat.typelist2[Array.IndexOf(TypeFormat.typelist, data[0])], TypeFormat.typelist2[Array.IndexOf(TypeFormat.typelist, data[1])] };
-                Type[] types = new Type[] { TypeFormat.TypeNameToType(typenames[0]), TypeFormat.TypeNameToType(typenames[1]) };
-
-                Type thistype = typeof(Dictionary<,>).MakeGenericType(types);
-
-                get = Activator.CreateInstance(thistype);
-
-                if (data[2] != "NotThing")
-                {
-                    System.Reflection.MethodInfo method = thistype.GetMethod("Add");
-
-                    string[] a = data[2].TakeString('{', '}');
-
-                    for (int i = 0; i < a.Length; i++)
-                    {
-                        string[] b = a[i].TakeString('{', '}');
-                        for (int ii = 0; ii < b.Length; ii++)
-                        {
-                            int index = a[i].IndexOf("{" + b[ii] + "}");
-                            a[i] = a[i].Substring(0, index) + "[" + ii + "]" + a[i].Substring(index + b[ii].Length + 2);
-                        }
-                        string[] nowdata = StringTool.SplitWithFormat(a[i], ',');
-                        for (int ii = 0; ii < nowdata.Length; ii++)
-                        {
-                            for (int iii = 0; iii < b.Length; iii++)
-                            {
-                                nowdata[ii] = nowdata[ii].Replace("[" + iii + "]", "{" + b[iii] + "}");
-                            }
-                        }
-                        object key = ChuonStringDeserializeToObject(nowdata[0]);
-                        object value = ChuonStringDeserializeToObject(nowdata[1]);
-                        method.Invoke(get, new object[] { key, value });
-                    }
-                }
-            }
-            else if (typ == "null")
-            {
-                get = null;
-            }
-            else if (Array.IndexOf(TypeFormat.typelist, typ) != -1)
-            {
-                get = StringToObjectForNotArray(thing);
-            }
-            else
-            {
-                get = typ;
-            }
-            return get;
-        }
-        #endregion
-
-        static string printTab(bool enable, int cont)
-        {
-            if (!enable)
-            {
-                return "";
-            }
             string ans = "\r\n";
             for (int i = 0; i < cont; i++)
             {

@@ -96,6 +96,29 @@ namespace Chuon
             vs.Add(input.Substring(now, input.Length - now));
             return vs.ToArray();
         }
+
+        internal static string[] SplitWithFormatWithoutinArray(string input, char a)
+        {
+            string[] tmp = input.TakeString('{', '}');
+            for (int i = 0; i < tmp.Length; i++)
+            {
+                int index = input.IndexOf("{" + tmp[i] + "}");
+                input = input.Substring(0, index) + "[" + i + "]" + input.Substring(index + tmp[i].Length + 2);
+            }
+            string[] splitalldata = SplitWithFormat(input, a);
+            for (int i = 0; i < splitalldata.Length; i++)
+            {
+                for (int ii = 0; ii < tmp.Length; ii++)
+                {
+                    splitalldata[i] = splitalldata[i].Replace("[" + ii + "]", "{" + tmp[ii] + "}");
+                }
+            }
+            if (splitalldata.Length == 1 && splitalldata[0].RemoveString(" ", "\n", "\r", "\t") == "")
+                splitalldata = new string[0];
+            return splitalldata;
+        }
+
+
         #endregion
 
         #region Hex

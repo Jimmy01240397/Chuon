@@ -14,13 +14,13 @@ namespace Chuon
         byte[] data;
         public ChuonBinary(object thing)
         {
-            using (MemoryStream stream = new MemoryStream())
-            using (BinaryWriter writer = new BinaryWriter(stream))
-            {
-                data = Typing(writer, thing);
-                writer.Close();
-                stream.Close();
-            }
+            int rank = TypeFormat.ArrayRank(out Type basetype, ref thing);
+            TypeFormat.typing nowtypedata = TypeFormat.Instance[basetype];
+            byte[] alldata = Typing(nowtypedata, thing, rank);
+            data = new byte[alldata.Length + 2];
+            data[0] = nowtypedata.index;
+            data[1] = (byte)rank;
+            alldata.CopyTo(data, 2);
         }
 
         public ChuonBinary(byte[] thing)
@@ -30,20 +30,31 @@ namespace Chuon
             ToObject();
         }
 
-        public object ToObject()
+        public ChuonBinary(byte[] thing, ref int index)
+        {
+            int nowindex = index;
+            data = thing;
+            ToObject(ref index);
+            int len = index - nowindex;
+            data = new byte[len];
+            Array.Copy(thing, nowindex, data, 0, len);
+        }
+
+        public object ToObject(ref int index)
         {
             object output = null;
             if (data != null)
             {
-                using (MemoryStream stream = new MemoryStream(data))
-                using (BinaryReader reader = new BinaryReader(stream))
-                {
-                    output = GetTyp(reader);
-                    reader.Close();
-                    stream.Close();
-                }
+                byte typeindex = data[index++], arrayrank = data[index++];
+                output = GetTyp(TypeFormat.Instance[typeindex], data, arrayrank, ref index);
             }
             return output;
+        }
+
+        public object ToObject()
+        {
+            int index = 0;
+            return ToObject(ref index);
         }
 
         public byte[] ToArray()
@@ -59,207 +70,187 @@ namespace Chuon
 
         public ChuonString ToChuonString()
         {
-            object datas = ToObject();
-            return new ChuonString(datas);
+            int index = 0;
+            return ToChuonString(ref index);
         }
 
-        #region Length
-        public static byte[] GetBytesLength(int cont)
+        public ChuonString ToChuonString(ref int index)
         {
-            List<byte> vs = new List<byte>();
-            for (int i = cont / 128; i != 0; i = cont / 128)
+            string output = null;
+            if (data != null)
             {
-                vs.Add((byte)(cont % 128 + 128));
-                cont = i;
-            }
-            vs.Add((byte)(cont % 128));
-            return vs.ToArray();
-        }
-
-        public static int GetIntLength(BinaryReader reader)
-        {
-            List<byte> vs = new List<byte>();
-            byte a;
-            do
-            {
-                a = reader.ReadByte();
-                vs.Add((byte)(a % 128));
-            } while (a >= 128);
-            int x = 0;
-            for (int i = 0; i < vs.Count; i++)
-            {
-                x += (int)(vs[i] * Math.Pow(128, i));
-            }
-            return x;
-        }
-        #endregion
-
-        #region Typing
-        static void TypingArray(BinaryWriter writer, object thing)
-        {
-            Array c = (Array)thing;
-            string typename = thing.GetType().Name;
-            writer.Write((byte)(Array.IndexOf(TypeFormat.type, typename)));
-            writer.Write(GetBytesLength(c.Length));
-            typename = typename.RemoveString("[", "]");
-            if (typename == "Byte" || typename == "Char")
-            {
-                typename += "[]";
-                System.Reflection.MethodInfo write = typeof(BinaryWriter).GetMethod("Write", new Type[] { TypeFormat.TypeNameToType(typename) });
-                write.Invoke(writer, new object[] { c });
-            }
-            else
-            {
-                System.Reflection.MethodInfo write = typeof(BinaryWriter).GetMethod("Write", new Type[] { TypeFormat.TypeNameToType(typename) });
-                for (int ii = 0; ii < c.Length; ii++)
+                byte typeindex = data[index++], arrayrank = data[index++];
+                TypeFormat.typing nowtypedata = TypeFormat.Instance[typeindex];
+                StringBuilder stringBuilder = new StringBuilder();
+                stringBuilder.Append(nowtypedata.name);
+                for (int i = 0; i < arrayrank; i++)
                 {
-                    if (typename == "Object")
+                    stringBuilder.Append("[]");
+                }
+                stringBuilder.Append(":");
+                stringBuilder.Append(ChuonStringTyping(nowtypedata, data, arrayrank, ref index));
+                output = stringBuilder.ToString();
+            }
+            return new ChuonString(output);
+        }
+
+
+        internal static byte[] Typing(TypeFormat.typing nowtypedata, object thing, int rank)
+        {
+            byte[] ans = null;
+            if (rank >= nowtypedata.AllSerializationFunc.Length)
+            {
+                if (rank > 0)
+                {
+                    using (MemoryStream stream = new MemoryStream())
+                    using (BinaryWriter writer = new BinaryWriter(stream))
                     {
-                        Typing(writer, c.GetValue(ii));
+                        byte[] len = TypeFormat.GetBytesLength(((Array)thing).Length);
+                        writer.Write(len, 0, len.Length);
+                        if ((rank > 1 || nowtypedata.cannull) && ((Array)thing).Length > 0)
+                        {
+                            byte nullbool = 0;
+                            for (int i = 0; i < ((Array)thing).Length; i++)
+                            {
+                                if (i % 8 == 0)
+                                {
+                                    if(i != 0)
+                                    {
+                                        writer.Write(nullbool);
+                                    }
+                                    nullbool = 0;
+                                }
+                                nullbool <<= 1;
+                                if (((Array)thing).GetValue(i) == null)
+                                {
+                                    nullbool++;
+                                }
+                            }
+                            writer.Write(nullbool);
+                        }
+                        for (int i = 0; i < ((Array)thing).Length; i++)
+                        {
+                            if (!(rank > 1 || nowtypedata.cannull) || ((Array)thing).GetValue(i) != null)
+                            {
+                                byte[] thingdata = Typing(nowtypedata, ((Array)thing).GetValue(i), rank - 1);
+                                writer.Write(thingdata, 0, thingdata.Length);
+                            }
+                        }
+                        writer.Close();
+                        stream.Close();
+                        ans = stream.ToArray();
                     }
-                    else
-                    {
-                        write.Invoke(writer, new object[] { c.GetValue(ii) });
-                    }
-                }
-            }
-        }
-
-        static void TypingNotArray(BinaryWriter writer, object thing)
-        {
-            string typename = thing.GetType().Name;
-            writer.Write((byte)(Array.IndexOf(TypeFormat.type, typename)));
-            System.Reflection.MethodInfo write = typeof(BinaryWriter).GetMethod("Write", new Type[] { TypeFormat.TypeNameToType(typename) });
-            write.Invoke(writer, new object[] { thing });
-        }
-
-        static byte[] Typing(BinaryWriter writer, object thing)
-        {
-            if (thing != null)
-            {
-                if (thing.GetType().Name.Contains("[]"))
-                {
-                    TypingArray(writer, thing);
-                }
-                else if (thing.GetType().Name == "Dictionary`2")
-                {
-                    Type datatype = thing.GetType();
-                    Type[] Subdatatype = datatype.GetGenericArguments();
-                    IDictionary c = (IDictionary)thing;
-                    writer.Write((byte)(Array.IndexOf(TypeFormat.type, datatype.Name)));
-                    writer.Write((byte)(Array.IndexOf(TypeFormat.type, Subdatatype[0].Name)));
-                    writer.Write((byte)(Array.IndexOf(TypeFormat.type, Subdatatype[1].Name)));
-                    writer.Write(GetBytesLength(c.Count));
-
-                    Array keys = Array.CreateInstance(Subdatatype[0], c.Keys.Count);
-                    Array values = Array.CreateInstance(Subdatatype[1], c.Values.Count);
-                    c.Keys.CopyTo(keys, 0);
-                    c.Values.CopyTo(values, 0);
-                    for (int i = 0; i < c.Count; i++)
-                    {
-                        Typing(writer, keys.GetValue(i));
-                        Typing(writer, values.GetValue(i));
-                    }
-                }
-                else if (Array.IndexOf(TypeFormat.type, thing.GetType().Name) != -1)
-                {
-                    TypingNotArray(writer, thing);
-                }
-                else
-                {
-                    writer.Write((byte)TypeFormat.type.Length);
-                    writer.Write(thing.ToString());
                 }
             }
             else
             {
-                writer.Write((byte)(Array.IndexOf(TypeFormat.type, "null")));
-                writer.Write(false);
+                ans = nowtypedata.AllSerializationFunc[rank].DataToBinary(thing);
             }
-            MemoryStream stream = (MemoryStream)writer.BaseStream;
-            return stream.ToArray();
-        }
-        #endregion
-
-        #region GetTyp
-        static object GetTypArray(string typ, BinaryReader reader)
-        {
-            int count = GetIntLength(reader);
-            typ = typ.RemoveString("[", "]");
-            if (typ == "Byte" || typ == "Char")
-            {
-                System.Reflection.MethodInfo method = typeof(BinaryReader).GetMethod("Read" + TypeFormat.TypeNameToType(typ).Name + "s");
-                return method.Invoke(reader, new object[] { count });
-            }
-            else
-            {
-                Array d = Array.CreateInstance(TypeFormat.TypeNameToType(typ), count);
-                System.Reflection.MethodInfo method = typeof(BinaryReader).GetMethod("Read" + TypeFormat.TypeNameToType(typ).Name);
-                for (int i = 0; i < d.Length; i++)
-                {
-                    if (typ == "Object")
-                    {
-                        d.SetValue(GetTyp(reader), i);
-                    }
-                    else
-                    {
-                        d.SetValue(method.Invoke(reader, null), i);
-                    }
-                }
-                return d;
-            }
+            return ans;
         }
 
-        static object GetTyp(BinaryReader reader)
+        internal static object GetTyp(TypeFormat.typing nowtypedata, byte[] data, int rank, ref int index)
         {
-            byte data = reader.ReadByte();
-            object get;
-            if (data < TypeFormat.type.Length)
+            Type nowtype = nowtypedata.type;
+            object ans = null;
+            if (rank >= nowtypedata.AllSerializationFunc.Length)
             {
-                string typ = TypeFormat.type[data];
-                if (typ.Contains("[]"))
+                if (rank > 0)
                 {
-                    get = GetTypArray(typ, reader);
-                }
-                else if (typ == "Dictionary`2")
-                {
-                    string[] typenames = new string[] { TypeFormat.type[reader.ReadByte()], TypeFormat.type[reader.ReadByte()] };
-                    Type[] types = new Type[] { TypeFormat.TypeNameToType(typenames[0]), TypeFormat.TypeNameToType(typenames[1]) };
-
-                    Type thistype = typeof(Dictionary<,>).MakeGenericType(types);
-                    System.Reflection.MethodInfo method = thistype.GetMethod("Add");
-
-                    IDictionary d = (IDictionary)Activator.CreateInstance(thistype);
-                    int count = GetIntLength(reader);
-                    for (int ii = 0; ii < count; ii++)
+                    int len = TypeFormat.GetIntLength(data, ref index);
+                    for (int i = 0; i < rank - 1; i++)
                     {
-                        object key = GetTyp(reader);
-                        object value = GetTyp(reader);
-                        method.Invoke(d, new object[] { key, value });
+                        nowtype = nowtype.MakeArrayType();
                     }
-                    get = d;
-                }
-                else if (typ == "null")
-                {
-                    bool a = reader.ReadBoolean();
-                    get = null;
-                }
-                else if (Array.IndexOf(TypeFormat.type, typ) != -1)
-                {
-                    System.Reflection.MethodInfo method = typeof(BinaryReader).GetMethod("Read" + TypeFormat.TypeNameToType(typ).Name);
-                    get = method.Invoke(reader, null);
-                }
-                else
-                {
-                    get = typ;
+                    ans = Array.CreateInstance(nowtype, len);
+                    bool[] allnullbools = new bool[len];
+                    if (rank > 1 || nowtypedata.cannull)
+                    {
+                        byte nullbool = 0;
+                        for (int i = 0; i < len; i++)
+                        {
+                            if (i % 8 == 0)
+                            {
+                                nullbool = data[index];
+                                index++;
+                            }
+                            int nowleft = len - (i / 8 * 8) >= 8 ? 8 : len - (i / 8 * 8);
+                            if ((i / 8 * 8) + (nowleft - 1 - (i % 8)) < allnullbools.Length)
+                            {
+                                allnullbools[(i / 8 * 8) + (nowleft - 1 - (i % 8))] = (nullbool & 1) == 1;
+                            }
+                            nullbool >>= 1;
+                        }
+                    }
+                    for (int i = 0; i < len; i++)
+                    {
+                        if (allnullbools[i])
+                        {
+                            ((Array)ans).SetValue(null, i);
+                        }
+                        else
+                        {
+                            ((Array)ans).SetValue(GetTyp(nowtypedata, data, rank - 1, ref index), i);
+                        }
+                    }
                 }
             }
             else
             {
-                get = reader.ReadString();
+                ans = nowtypedata.AllSerializationFunc[rank].BinaryToData(data, ref index);
             }
-            return get;
+            return ans;
         }
-        #endregion
+
+        internal static string ChuonStringTyping(TypeFormat.typing nowtypedata, byte[] data, int rank, ref int index)
+        {
+            StringBuilder stringBuilder = new StringBuilder();
+            if (rank > 0) stringBuilder.Append("{");
+            if (rank >= nowtypedata.AllSerializationFunc.Length)
+            {
+                if (rank > 0)
+                {
+                    int len = TypeFormat.GetIntLength(data, ref index);
+                    bool[] allnullbools = new bool[len];
+                    if (rank > 1 || nowtypedata.cannull)
+                    {
+                        byte nullbool = 0;
+                        for (int i = 0; i < len; i++)
+                        {
+                            if (i % 8 == 0)
+                            {
+                                nullbool = data[index];
+                                index++;
+                            }
+                            int nowleft = len - (i / 8 * 8) >= 8 ? 8 : len - (i / 8 * 8);
+                            if ((i / 8 * 8) + (nowleft - 1 - (i % 8)) < allnullbools.Length)
+                            {
+                                allnullbools[(i / 8 * 8) + (nowleft - 1 - (i % 8))] = (nullbool & 1) == 1;
+                            }
+                            nullbool >>= 1;
+                        }
+                    }
+                    for (int i = 0; i < len; i++)
+                    {
+                        if (allnullbools[i])
+                        {
+                            stringBuilder.Append("null,");
+                        }
+                        else
+                        {
+                            stringBuilder.Append(ChuonStringTyping(nowtypedata, data, rank - 1, ref index) + ",");
+                        }
+                    }
+                    if (stringBuilder[stringBuilder.Length - 1] == ',')
+                        stringBuilder.Remove(stringBuilder.Length - 1, 1);
+                }
+            }
+            else
+            {
+                stringBuilder.Append(nowtypedata.AllSerializationFunc[rank].BinaryToString(data, ref index));
+            }
+            if (rank > 0) stringBuilder.Append("}");
+            return stringBuilder.ToString();
+        }
     }
 }
