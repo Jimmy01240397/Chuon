@@ -69,6 +69,8 @@ If first byte is Greater than 128 than the number is:
 
 #### array
 
+Support for multidimensional arrays.
+
 | length | data null tag(data allow null element except "object") | datas |
 | -------- | -------- | -------- |
 | [Base 128](#base-128) | (length - 1) / 8 + 1 | ([data_binary](#data-binary)) * length |
