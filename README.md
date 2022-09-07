@@ -21,15 +21,19 @@ Or it can use the most suitable serialization format to serialize data objects c
   * [string](#string)
   * [bool](#bool)
   * [object](#object)
-  * [Dictionary](#dictionary)
+  * [dict](#dict)
 * [Usage](#usage)
 * [Example](#example)
 
 ## Binary Format
 
-| type | length(if it is Array) | data |
+| type | Array dimension | data |
 | -------- | -------- | -------- |
-| 1 byte     | num is Base 128       | data binary length |
+| 1 byte | 1 byte | data binary |
+
+
+## length
+We use [Base 128](#base-128) to record all length contain Array length dict length....
 
 ### Base 128
 If first byte is Less than 128 than it don't have next digit.
@@ -40,9 +44,10 @@ If first byte is Greater than 128 than the number is:
 
 ![](https://render.githubusercontent.com/render/math?math=(byte%5B0%5D-128)%20%2B%20(byte%5B1%5D-128)%20*%20128%5E1%20%2B%20...%20%2B%20(byte%5Bn%20-%201%5D-128)%20*%20128%5E%7Bn%20-%201%7D%20%2B%20byte%5Bn%5D%20*%20128%5En)
 
-### data binary length
+### data binary
 
 
+#### base type
 | type | length |
 | -------- | -------- |
 | byte     | 1 byte     |
@@ -55,33 +60,35 @@ If first byte is Greater than 128 than the number is:
 | ulong     | 8 bytes     |
 | float     | 4 bytes     |
 | double     | 8 bytes     |
-| decimal     | 16 bytes     |
 | char     | 1 byte     |
 | string     | string_length_length + string_length bytes     |
 | bool     | 1 byte     |
-| object     | data_type_length + data_length_length(if it is Array) + data_length bytes    |
-| Dictionary     | key_type_length + data_type_length + length_length + (key_type_length + length(if it is Array) + key_length + data_type_length + length(if it is Array) + data_length)... bytes     |
+| object     | 1 byte (for data type length) + 1 byte (for data type Array dimension) + data_binary_length  (if data type length is 00 and data Array dimension is 00 that mean this data is null) |
+| dict     | 1 byte (for key type length) + 1 byte (for key type Array dimension) + 1 byte (for data type length) + 1 byte (for data type Array dimension) + dict_length + (key_binary_length + data_binary_length) * dict_length |
+
+#### array
+
+| length | data null tag(data allow null element except "object") | datas |
+| -------- | -------- | -------- |
+| [Base 128](#base-128) | (length - 1) / 8 + 1 | (data binary) * length |
+
 
 ## String Format
 There are the types that you can use.
-* byte 
-* sbyte 
-* short 
-* int
-* long
-* ushort
-* uint
-* ulong
-* float
-* double
-* decimal
-* char
-* string
-* bool
-* object[]
-* Dictionary
-
-Arrays can be used except for Dictionary and object[](it is already an array)
+* [byte](#byte) 
+* [short](#short) 
+* [int](#int) 
+* [long](#long) 
+* [ushort](#ushort) 
+* [uint](#uint) 
+* [ulong](#ulong) 
+* [float](#float) 
+* [double](#double) 
+* [char](#char) 
+* [string](#string) 
+* [bool](#bool) 
+* [object](#object) 
+* [dict](#dict) 
 
 ### byte
 ``` C#
@@ -95,18 +102,16 @@ byte[]:
 	<Hex(don't add 0x)>
 }
 ```
-### sbyte
+
 ``` C#
-sbyte:<number between -128~127>
-```
-#### Array
-``` C#
-sbyte[]:
+byte[][]:
 {
-	-55,
-	22,
-	100,
-    <number between -128~127>
+	{
+		1122ddff
+	},
+	{
+		<Hex(don't add 0x)>
+	}
 }
 ```
 ### short
@@ -205,18 +210,6 @@ double[]:
 	-3.1415926
 }
 ```
-### decimal
-``` C#
-decimal:<floating-point number>
-```
-#### Array
-``` C#
-decimal[]:
-{
-	5.55555555555,
-	-3.1415926
-}
-```
 ### char
 ``` C#
 char:'<character>'
@@ -249,11 +242,27 @@ bool:<boolean>
 ``` C#
 bool[]:
 {
-	true,
-	false
+	011001
 }
 ```
-### object[]
+``` C#
+bool[][]:
+{
+	{
+		011001
+	},
+	{
+		<many 0 or 1>
+	}
+}
+```
+### object
+``` C#
+object:null
+
+```
+
+#### Array
 ``` C#
 object[]:
 {
@@ -266,19 +275,48 @@ object[]:
     <type>:<data>
 }
 ```
+
 ### Dictionary
 ``` C#
 Dictionary:
 {
     <key type>:<data type>:
     {
-        <key type>:<key>,
-        <data type>:<data>
+        <key>,
+        <data>
     }
     {
-        string:"now",
-        int:111
+        "now",
+        111
     }
+}
+```
+#### Array
+``` C#
+Dictionary[]:
+{
+	{
+		int:string:
+		{
+			1,
+			"bad"
+		}
+		{
+			10,
+			"good"
+		}
+	}
+	{
+		<key type>:<data type>:
+		{
+			<key>,
+			<data>
+		}
+		{
+			"now",
+			111
+		}
+	}
 }
 ```
 
@@ -290,8 +328,8 @@ using Chuon;
 ```
 #### Java
 ``` java
-import com.jimmiker.ChuonString;
-import com.jimmiker.ChuonBinary;
+import chuon.ChuonString;
+import chuon.ChuonBinary;
 ```
 
 ### Object to Chuon String
@@ -367,7 +405,11 @@ ChuonString chuonString = new ChuonString(stringbytes, Charset.forName("<encodin
 ```
 
 ## Example
+
 ### C#
 [ChounTranslator](https://github.com/Jimmy01240397/Chuon/tree/master/ChuonCS/ChounTranslator)
 
 ![image](https://user-images.githubusercontent.com/57281249/141677492-09a5cecf-df4b-4acc-8574-dcef457d7efe.png)
+
+### Java
+[ChounTranslator](https://github.com/Jimmy01240397/Chuon/tree/master/ChuonJava/ChounTranslator)
