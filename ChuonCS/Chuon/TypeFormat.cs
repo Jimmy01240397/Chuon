@@ -545,7 +545,13 @@ namespace Chuon
                     index++;
                     return temp != 0;
                 },
-                (data) => Convert.ToBoolean(data.RemoveString(" ", "\n", "\r", "\t"))),
+                (data) =>
+                {
+                    data = data.RemoveString(" ", "\n", "\r", "\t");
+                    if (data == "1") return true;
+                    else if (data == "0") return false;
+                    return Convert.ToBoolean(data);
+                }),
                 new SerializationFunc(
                 (data) =>
                 {

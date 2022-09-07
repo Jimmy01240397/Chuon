@@ -546,7 +546,10 @@ class TypeFormat {
 
    				@Override
    				public Object StringToData(String data) throws Exception {
-   					return Boolean.parseBoolean(StringTool.RemoveString(data, " ", "\n", "\r", "\t"));
+   					data = StringTool.RemoveString(data, " ", "\n", "\r", "\t");
+                    if (data.equals("1")) return true;
+                    else if (data.equals("0")) return false;
+   					return Boolean.parseBoolean(data);
    				}
    				
    				@Override
