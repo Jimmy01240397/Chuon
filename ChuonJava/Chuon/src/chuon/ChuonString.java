@@ -45,6 +45,7 @@ public class ChuonString {
         int rank = StringTool.TakeString(type, '[', ']').length;
         TypeFormat.typing nowtypedata = TypeFormat.instance().get(basetype);
         String alldata = splitdata[1];
+        if (StringTool.RemoveString(alldata, " ", "\n", "\r", "\t").equals("null")) return null;
         if (rank > 0)
         {
             alldata = StringTool.TakeString(splitdata[1], '{', '}')[0];
@@ -157,7 +158,6 @@ public class ChuonString {
     {
         Class nowtype = nowtypedata.gettype();
         Object ans = null;
-        if (StringTool.RemoveString(nowdata, " ", "\n", "\r", "\t").equals("null")) return null;
         if (rank >= nowtypedata.AllSerializationFunc.length)
         {
             if (rank > 0)

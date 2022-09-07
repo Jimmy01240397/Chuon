@@ -49,6 +49,7 @@ namespace Chuon
             int rank = type.TakeString('[', ']').Length;
             TypeFormat.typing nowtypedata = TypeFormat.Instance[basetype];
             string alldata = splitdata[1];
+            if (alldata.RemoveString(" ", "\n", "\r", "\t") == "null") return null;
             if (rank > 0)
             {
                 alldata = splitdata[1].TakeString('{', '}')[0];
@@ -160,7 +161,6 @@ namespace Chuon
         {
             Type nowtype = nowtypedata.type;
             object ans = null;
-            if (nowdata.RemoveString(" ", "\n", "\r", "\t") == "null") return null;
             if (rank >= nowtypedata.AllSerializationFunc.Length)
             {
                 if (rank > 0)
