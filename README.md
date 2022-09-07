@@ -3,11 +3,13 @@ Chummy Object Notation is a data interchange format and a serialization format t
 Or it can use the most suitable serialization format to serialize data objects consisting of attribute-value pairs and arrays (or other serializable values).
 
 * [Binary Format](#binary-format)
-  * [Base 128](#base-128)
-  * [data binary length](#data-binary-length)
+  * [length](#length)
+    * [Base 128](#base-128)
+  * [data binary](#data-binary)
+    * [base type](#base-type)
+    * [array](#array)
 * [String Format](#string-format)
   * [byte](#byte)
-  * [sbyte](#sbyte)
   * [short](#short)
   * [int](#int)
   * [long](#long)
@@ -16,7 +18,6 @@ Or it can use the most suitable serialization format to serialize data objects c
   * [ulong](#ulong)
   * [float](#float)
   * [double](#double)
-  * [decimal](#decimal)
   * [char](#char)
   * [string](#string)
   * [bool](#bool)
@@ -32,10 +33,10 @@ Or it can use the most suitable serialization format to serialize data objects c
 | 1 byte | 1 byte | data binary |
 
 
-## length
+### length
 We use [Base 128](#base-128) to record all length contain Array length dict length....
 
-### Base 128
+#### Base 128
 If first byte is Less than 128 than it don't have next digit.
 
 If first byte is Greater than 128 than the number is:
