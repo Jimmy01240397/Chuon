@@ -1,4 +1,4 @@
-package com.jimmiker;
+package chuon;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

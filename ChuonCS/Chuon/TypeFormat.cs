@@ -127,8 +127,26 @@ namespace Chuon
         {
             public byte index { get; private set; }
             public Type type { get; private set; }
-            public string name { get; private set; }
+            private string[] _names;
             public bool cannull { get; private set; }
+
+            public string name
+            {
+                get
+                {
+                    return _names[0];
+                }
+            }
+
+            public string[] names
+            {
+                get
+                {
+                    string[] tmp = new string[_names.Length];
+                    _names.CopyTo(tmp, 0);
+                    return tmp;
+                }
+            }
 
             public SerializationFunc[] AllSerializationFunc;
 
@@ -136,7 +154,18 @@ namespace Chuon
             {
                 this.index = index;
                 this.type = type;
-                this.name = name;
+                this._names = new string[] { name };
+                this.cannull = cannull;
+                if (serializationFunc.Length == 0) throw new ArgumentNullException("serializationFunc");
+                this.AllSerializationFunc = serializationFunc;
+            }
+
+            public typing(byte index, Type type, string[] names, bool cannull, params SerializationFunc[] serializationFunc)
+            {
+                this.index = index;
+                this.type = type;
+                this._names = new string[names.Length];
+                names.CopyTo(_names, 0);
                 this.cannull = cannull;
                 if (serializationFunc.Length == 0) throw new ArgumentNullException("serializationFunc");
                 this.AllSerializationFunc = serializationFunc;
@@ -195,7 +224,7 @@ namespace Chuon
             {
                 for (int i = 0; i < typings.Count; i++)
                 {
-                    if (typings[i].name == index) return typings[i];
+                    if (Array.IndexOf(typings[i].names, index) != -1) return typings[i];
                 }
                 throw new IndexOutOfRangeException();
             }
@@ -412,7 +441,15 @@ namespace Chuon
                     return nowdata;
                 },
                 (data) => StringTool.HexToBytes(data.RemoveString(" ")),
-                (data) => StringTool.HexToBytes(data.RemoveString(" "))
+                (data) =>
+                {
+                    byte[] newdata = StringTool.HexToBytes(data.RemoveString(" "));
+                    byte[] len = GetBytesLength(newdata.Length);
+                    byte[] ans = new byte[len.Length + newdata.Length];
+                    len.CopyTo(ans, 0);
+                    newdata.CopyTo(ans, len.Length);
+                    return ans;
+                }
             )));
             #endregion
 
@@ -614,7 +651,7 @@ namespace Chuon
                 (data) => StringTool.Unescape(data.TakeString('\"', '\"')[0]))));
             #endregion
             #region Dictionary
-            typings.Add(new typing(13, typeof(IDictionary), "Dictionary", true, new SerializationFunc(
+            typings.Add(new typing(13, typeof(IDictionary), new string[] { "dict", "map", "Map", "Dictionary" }, true, new SerializationFunc(
                 (data) =>
                 {
                     IDictionary nowdata = (IDictionary)data;

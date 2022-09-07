@@ -1,4 +1,4 @@
-package com.jimmiker;
+package chuon;
 
 public interface Func<T, R>
 {

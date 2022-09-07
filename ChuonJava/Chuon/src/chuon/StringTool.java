@@ -1,11 +1,11 @@
-package com.jimmiker;
+package chuon;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public class StringTool {
-    final static char[] format = { '\t', '\n', '\r', '\f', '\'', '\"', '\\', '{', '}', '[', ']', ',', ':' };
-    final static char[] unformat = { 't', 'n', 'r', 'f' };
+    final static Character[] format = { '\t', '\n', '\r', '\f', '\'', '\"', '\\', '{', '}', '[', ']', ',', ':' };
+    final static Character[] unformat = { 't', 'n', 'r', 'f' };
 	
     static int Matches(String input, char a)
     {
@@ -93,8 +93,66 @@ public class StringTool {
         return vs.toArray(outdata);
     }
 
+    static String[] SplitWithFormatWithoutinArray(String input, char a)
+    {
+    	String[] tmp = TakeString(input, '{', '}');
+        for (int i = 0; i < tmp.length; i++)
+        {
+            int index = input.indexOf("{" + tmp[i] + "}");
+            input = input.substring(0, index) + "[" + i + "]" + input.substring(index + tmp[i].length() + 2);
+        }
+        String[] splitalldata = SplitWithFormat(input, a);
+        for (int i = 0; i < splitalldata.length; i++)
+        {
+            for (int ii = 0; ii < tmp.length; ii++)
+            {
+                splitalldata[i] = splitalldata[i].replace("[" + ii + "]", "{" + tmp[ii] + "}");
+            }
+        }
+        if (splitalldata.length == 1 && RemoveString(splitalldata[0], " ", "\n", "\r", "\t") == "")
+            splitalldata = new String[0];
+        return splitalldata;
+    }
+    
+	static public byte[] HexToBytes(String str) throws Exception
+	{
+	    str = StringTool.RemoveString(str, " ", "\n", "\r", "\t");
+	    byte[] bytes = new byte[str.length() / 2];
+	    int j = 0;
+	    
+	    Func<String, Byte> HexToByte = new Func<String, Byte>() {
+			
+			@Override
+			public Byte run(String... hex) {
+		        if (hex[0].length() > 2 || hex[0].length() <= 0)
+		            throw new IllegalArgumentException("hex must be 1 or 2 characters in length");
+		        byte newByte = (byte) Integer.parseInt(hex[0],16);
+		        return newByte;
+			}
+		};
+	    
+	    for (int i = 0; i < bytes.length; i++)
+	    {
+	        String hex = new String(new char[] { str.charAt(j), str.charAt(j + 1) });
+	        bytes[i] = HexToByte.run(hex);
+	        j = j + 2;
+	    }
+	    return bytes;
+	}
+	
+	static public String BytesToHex(byte[] bytes)
+	{
+	    StringBuilder str2 = new StringBuilder();
+	    for (int i = 0; i < bytes.length; i++)
+	    {
+	        str2.append(String.format("%02X", bytes[i]));
+	    }
+	    return str2.toString();
+	}
+    
     public static String[] TakeString(String text, Character a, Character b)
     {
+    	
         ArrayList<String> q = new ArrayList<String>(Arrays.asList(SplitWithFormat(text, b)));
         if (a == b)
         {
@@ -167,44 +225,8 @@ public class StringTool {
     {
         for(int i = 0; i < arg.length; i++)
         {
-            input = input.replaceAll(arg[i], "");
+            input = input.replace(arg[i], "");
         }
         return input;
     }
-	    
-	static public byte[] HexToBytes(String str) throws Exception
-	{
-	    str = StringTool.RemoveString(str, new String[] { " ", "\n", "\r", "\t" });
-	    byte[] bytes = new byte[str.length() / 2];
-	    int j = 0;
-	    
-	    Func<String, Byte> HexToByte = new Func<String, Byte>() {
-			
-			@Override
-			public Byte run(String... hex) {
-		        if (hex[0].length() > 2 || hex[0].length() <= 0)
-		            throw new IllegalArgumentException("hex must be 1 or 2 characters in length");
-		        byte newByte = (byte) Integer.parseInt(hex[0],16);
-		        return newByte;
-			}
-		};
-	    
-	    for (int i = 0; i < bytes.length; i++)
-	    {
-	        String hex = new String(new char[] { str.charAt(j), str.charAt(j + 1) });
-	        bytes[i] = HexToByte.run(hex);
-	        j = j + 2;
-	    }
-	    return bytes;
-	}
-	
-	static public String BytesToHex(byte[] bytes)
-	{
-	    StringBuilder str2 = new StringBuilder();
-	    for (int i = 0; i < bytes.length; i++)
-	    {
-	        str2.append(String.format("%02X", bytes[i]));
-	    }
-	    return str2.toString();
-	}
 }
