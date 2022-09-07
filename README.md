@@ -279,9 +279,9 @@ object[]:
 }
 ```
 
-### Dictionary
+### dict
 ``` C#
-Dictionary:
+dict:
 {
     <key type>:<data type>:
     {
@@ -296,7 +296,7 @@ Dictionary:
 ```
 #### Array
 ``` C#
-Dictionary[]:
+dict[]:
 {
 	{
 		int:string:
