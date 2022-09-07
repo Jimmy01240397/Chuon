@@ -30,7 +30,7 @@ Or it can use the most suitable serialization format to serialize data objects c
 
 | type | Array dimension | data |
 | -------- | -------- | -------- |
-| 1 byte | 1 byte | data binary |
+| 1 byte | 1 byte | [data binary](#data-binary) |
 
 
 ### length
