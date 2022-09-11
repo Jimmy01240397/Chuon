@@ -65,13 +65,13 @@ If first byte is Greater than 128 than the number is:
 | string     | [string_length](#base-128) + string bytes     |
 | bool     | 1 byte     |
 | object     | 1 byte (for data type length) + 1 byte (for data type Array dimension) + [data binary](#data-binary) (if data type length is 00 and data Array dimension is 00 that mean this data is null) |
-| dict     | 1 byte (for key type length) + 1 byte (for key type Array dimension) + 1 byte (for data type length) + 1 byte (for data type Array dimension) + [dict_length](#base-128) + ([key_binary](#data-binary) + [data_binary](#data-binary)) * dict_length |
+| dict     | 1 byte (for key type length) + 1 byte (for key type Array dimension) + 1 byte (for data type length) + 1 byte (for data type Array dimension) + [dict_length](#base-128) + data_null_tag(data element nullable except "object") + ([key_binary](#data-binary) + [data_binary](#data-binary)) * dict_length |
 
 #### array
 
 Support for multidimensional arrays.
 
-| length | data null tag(data allow null element except "object") | datas |
+| length | data null tag(data element nullable except "object") | datas |
 | -------- | -------- | -------- |
 | [Base 128](#base-128) | (length - 1) / 8 + 1 | ([data_binary](#data-binary)) * length |
 
