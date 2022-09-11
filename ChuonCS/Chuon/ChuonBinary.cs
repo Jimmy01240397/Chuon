@@ -97,6 +97,7 @@ namespace Chuon
 
         internal static byte[] Typing(TypeFormat.typing nowtypedata, object thing, int rank)
         {
+            if (thing == null && !(nowtypedata.type == typeof(object) && rank == 0)) return null;
             byte[] ans = null;
             if (rank >= nowtypedata.AllSerializationFunc.Length)
             {
@@ -107,7 +108,42 @@ namespace Chuon
                     {
                         byte[] len = TypeFormat.GetBytesLength(((Array)thing).Length);
                         writer.Write(len, 0, len.Length);
-                        if ((rank > 1 || nowtypedata.cannull) && ((Array)thing).Length > 0)
+
+                        using (MemoryStream stream2 = new MemoryStream())
+                        using (BinaryWriter writer2 = new BinaryWriter(stream2))
+                        {
+                            byte nullbool = 0;
+                            for (int i = 0; i < ((Array)thing).Length; i++)
+                            {
+                                byte[] thingdata = Typing(nowtypedata, ((Array)thing).GetValue(i), rank - 1);
+                                if ((rank > 1 || nowtypedata.cannull) && ((Array)thing).Length > 0)
+                                {
+                                    if (i % 8 == 0)
+                                    {
+                                        if (i != 0)
+                                        {
+                                            writer.Write(nullbool);
+                                        }
+                                        nullbool = 0;
+                                    }
+                                    nullbool <<= 1;
+                                    if (thingdata == null)
+                                    {
+                                        nullbool++;
+                                    }
+                                }
+                                if(thingdata != null)
+                                {
+                                    writer2.Write(thingdata, 0, thingdata.Length);
+                                }
+                            }
+                            if ((rank > 1 || nowtypedata.cannull) && ((Array)thing).Length > 0) writer.Write(nullbool);
+                            writer2.Close();
+                            stream2.Close();
+                            writer.Write(stream2.ToArray());
+                        }
+
+                        /*if ((rank > 1 || nowtypedata.cannull) && ((Array)thing).Length > 0)
                         {
                             byte nullbool = 0;
                             for (int i = 0; i < ((Array)thing).Length; i++)
@@ -135,7 +171,7 @@ namespace Chuon
                                 byte[] thingdata = Typing(nowtypedata, ((Array)thing).GetValue(i), rank - 1);
                                 writer.Write(thingdata, 0, thingdata.Length);
                             }
-                        }
+                        }*/
                         writer.Close();
                         stream.Close();
                         ans = stream.ToArray();

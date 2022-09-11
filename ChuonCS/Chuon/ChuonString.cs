@@ -49,11 +49,11 @@ namespace Chuon
             int rank = type.TakeString('[', ']').Length;
             TypeFormat.typing nowtypedata = TypeFormat.Instance[basetype];
             string alldata = splitdata[1];
-            if (alldata.RemoveString(" ", "\n", "\r", "\t") == "null") return null;
+            /*if (alldata.RemoveString(" ", "\n", "\r", "\t") == "null") return null;
             if (rank > 0)
             {
                 alldata = splitdata[1].TakeString('{', '}')[0];
-            }
+            }*/
             output = GetTyp(nowtypedata, rank, alldata);
             return output;
         }
@@ -66,11 +66,17 @@ namespace Chuon
             int rank = type.TakeString('[', ']').Length;
             TypeFormat.typing nowtypedata = TypeFormat.Instance[basetype];
             string allstringdata = splitdata[1];
-            if (rank > 0)
+            /*if (rank > 0)
             {
                 allstringdata = splitdata[1].TakeString('{', '}')[0];
-            }
+            }*/
             byte[] alldata = ChuonBinaryTyping(nowtypedata, rank, allstringdata);
+            if(alldata == null)
+            {
+                nowtypedata = TypeFormat.Instance[typeof(object)];
+                rank = 0;
+                alldata = ChuonBinaryTyping(nowtypedata, rank, allstringdata);
+            }
             byte[] ans = new byte[alldata.Length + 2];
             ans[0] = nowtypedata.index;
             ans[1] = (byte)rank;
@@ -160,6 +166,11 @@ namespace Chuon
         internal static object GetTyp(TypeFormat.typing nowtypedata, int rank, string nowdata)
         {
             Type nowtype = nowtypedata.type;
+            if (nowdata.RemoveString(" ", "\n", "\r", "\t") == "null") return null;
+            if (rank > 0)
+            {
+                nowdata = nowdata.TakeString('{', '}')[0];
+            }
             object ans = null;
             if (rank >= nowtypedata.AllSerializationFunc.Length)
             {
@@ -173,13 +184,13 @@ namespace Chuon
                     ans = Array.CreateInstance(nowtype, alldata.Length);
                     for (int i = 0; i < alldata.Length; i++)
                     {
-                        if (alldata[i].RemoveString(" ", "\n", "\r", "\t") == "null")
+                        /*if (alldata[i].RemoveString(" ", "\n", "\r", "\t") == "null")
                             ((Array)ans).SetValue(null, i);
                         else
-                        {
-                            if (rank - 1 > 0) alldata[i] = alldata[i].TakeString('{', '}')[0];
+                        {*/
+                            //if (rank - 1 > 0) alldata[i] = alldata[i].TakeString('{', '}')[0];
                             ((Array)ans).SetValue(GetTyp(nowtypedata, rank - 1, alldata[i]), i);
-                        }
+                        //}
                     }
                 }
             }
@@ -192,6 +203,11 @@ namespace Chuon
 
         internal static byte[] ChuonBinaryTyping(TypeFormat.typing nowtypedata, int rank, string nowdata)
         {
+            if (nowdata.RemoveString(" ", "\n", "\r", "\t") == "null" && !(nowtypedata.type == typeof(object) && rank == 0)) return null;
+            if (rank > 0)
+            {
+                nowdata = nowdata.TakeString('{', '}')[0];
+            }
             byte[] ans = null;
             if (rank >= nowtypedata.AllSerializationFunc.Length)
             {
@@ -204,7 +220,42 @@ namespace Chuon
                         byte[] len = TypeFormat.GetBytesLength(alldata.Length);
 
                         writer.Write(len, 0, len.Length);
-                        if ((rank > 1 || nowtypedata.cannull) && alldata.Length > 0)
+
+                        using (MemoryStream stream2 = new MemoryStream())
+                        using (BinaryWriter writer2 = new BinaryWriter(stream2))
+                        {
+                            byte nullbool = 0;
+                            for (int i = 0; i < alldata.Length; i++)
+                            {
+                                byte[] getdata = ChuonBinaryTyping(nowtypedata, rank - 1, alldata[i]);
+                                if ((rank > 1 || nowtypedata.cannull) && alldata.Length > 0)
+                                {
+                                    if (i % 8 == 0)
+                                    {
+                                        if (i != 0)
+                                        {
+                                            writer.Write(nullbool);
+                                        }
+                                        nullbool = 0;
+                                    }
+                                    nullbool <<= 1;
+                                    if (getdata == null)
+                                    {
+                                        nullbool++;
+                                    }
+                                }
+                                if (getdata != null)
+                                {
+                                    writer2.Write(getdata);
+                                }
+                            }
+                            if ((rank > 1 || nowtypedata.cannull) && alldata.Length > 0) writer.Write(nullbool);
+                            writer2.Close();
+                            stream2.Close();
+                            writer.Write(stream2.ToArray());
+                        }
+
+                        /*if ((rank > 1 || nowtypedata.cannull) && alldata.Length > 0)
                         {
                             byte nullbool = 0;
                             for (int i = 0; i < alldata.Length; i++)
@@ -228,12 +279,12 @@ namespace Chuon
 
                         for (int i = 0; i < alldata.Length; i++)
                         {
-                            if (rank - 1 > 0) if (alldata[i] != "null") alldata[i] = alldata[i].TakeString('{', '}')[0];
+                            //if (rank - 1 > 0) if (alldata[i] != "null") alldata[i] = alldata[i].TakeString('{', '}')[0];
                             if (!(rank > 1 || nowtypedata.cannull) || alldata[i] != "null")
                             {
                                 writer.Write(ChuonBinaryTyping(nowtypedata, rank - 1, alldata[i]));
                             }
-                        }
+                        }*/
                         writer.Close();
                         stream.Close();
                         ans = stream.ToArray();

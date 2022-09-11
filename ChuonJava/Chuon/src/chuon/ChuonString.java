@@ -7,6 +7,12 @@ import java.nio.charset.Charset;
 
 public class ChuonString {
     String data = "";
+    
+    ChuonString()
+    {
+    	
+    }
+
     public ChuonString(Object thing) throws Exception
     {
     	Class[] basetype = new Class[1];
@@ -27,13 +33,13 @@ public class ChuonString {
     public ChuonString(String thing) throws Exception
     {
         data = thing;
-        data = new ChuonString(toObject()).toString();
+        data = toChuonBinary().toChuonString().toString();
     }
     
     public ChuonString(byte[] thing, Charset encoding) throws Exception
     {
         data = new String(thing, encoding);
-        data = new ChuonString(toObject()).toString();
+        data = toChuonBinary().toChuonString().toString();
     }
 
     public Object toObject() throws Exception
@@ -45,11 +51,11 @@ public class ChuonString {
         int rank = StringTool.TakeString(type, '[', ']').length;
         TypeFormat.typing nowtypedata = TypeFormat.instance().get(basetype);
         String alldata = splitdata[1];
-        if (StringTool.RemoveString(alldata, " ", "\n", "\r", "\t").equals("null")) return null;
+        /*if (StringTool.RemoveString(alldata, " ", "\n", "\r", "\t").equals("null")) return null;
         if (rank > 0)
         {
             alldata = StringTool.TakeString(splitdata[1], '{', '}')[0];
-        }
+        }*/
         output = GetTyp(nowtypedata, rank, alldata);
         return output;
     }
@@ -62,16 +68,24 @@ public class ChuonString {
         int rank = StringTool.TakeString(type, '[', ']').length;
         TypeFormat.typing nowtypedata = TypeFormat.instance().get(basetype);
         String allstringdata = splitdata[1];
-        if (rank > 0)
+        /*if (rank > 0)
         {
             allstringdata = StringTool.TakeString(splitdata[1], '{', '}')[0];
-        }
+        }*/
         byte[] alldata = ChuonBinaryTyping(nowtypedata, rank, allstringdata);
+        if(alldata == null)
+        {
+            nowtypedata = TypeFormat.instance().get(Object.class);
+            rank = 0;
+            alldata = ChuonBinaryTyping(nowtypedata, rank, allstringdata);
+        }
         byte[] ans = new byte[alldata.length + 2];
         ans[0] = nowtypedata.getindex();
         ans[1] = (byte)rank;
         System.arraycopy(alldata, 0, ans, 2, alldata.length);
-        return new ChuonBinary(ans);
+        ChuonBinary output = new ChuonBinary();
+        output.data = ans;
+        return output;
     }
     
     public String toString()
@@ -157,6 +171,11 @@ public class ChuonString {
     static Object GetTyp(TypeFormat.typing nowtypedata, int rank, String nowdata) throws Exception
     {
         Class nowtype = nowtypedata.gettype();
+        if (StringTool.RemoveString(nowdata, " ", "\n", "\r", "\t").equals("null")) return null;
+        if (rank > 0)
+        {
+            nowdata = StringTool.TakeString(nowdata, '{', '}')[0];
+        }
         Object ans = null;
         if (rank >= nowtypedata.AllSerializationFunc.length)
         {
@@ -170,13 +189,13 @@ public class ChuonString {
                 ans = Array.newInstance(nowtype, alldata.length);
                 for (int i = 0; i < alldata.length; i++)
                 {
-                    if (StringTool.RemoveString(alldata[i], " ", "\n", "\r", "\t").equals("null"))
+                    /*if (StringTool.RemoveString(alldata[i], " ", "\n", "\r", "\t").equals("null"))
                         Array.set(ans, i, null);
                     else
-                    {
-                        if (rank - 1 > 0) alldata[i] = StringTool.TakeString(alldata[i], '{', '}')[0];
-                        Array.set(ans, i, GetTyp(nowtypedata, rank - 1, alldata[i]));
-                    }
+                    {*/
+                        //if (rank - 1 > 0) alldata[i] = StringTool.TakeString(alldata[i], '{', '}')[0];
+                    Array.set(ans, i, GetTyp(nowtypedata, rank - 1, alldata[i]));
+                    //}
                 }
             }
         }
@@ -189,6 +208,11 @@ public class ChuonString {
 
     static byte[] ChuonBinaryTyping(TypeFormat.typing nowtypedata, int rank, String nowdata) throws Exception
     {
+        if (StringTool.RemoveString(nowdata, " ", "\n", "\r", "\t").equals("null") && !(nowtypedata.gettype() == Object.class && rank == 0)) return null;
+        if (rank > 0)
+        {
+            nowdata = StringTool.TakeString(nowdata, '{', '}')[0];
+        }
         byte[] ans = null;
         if (rank >= nowtypedata.AllSerializationFunc.length)
         {
@@ -202,7 +226,45 @@ public class ChuonString {
 	                    byte[] len = TypeFormat.GetBytesLength(alldata.length);
 	
 	                    writer.write(len, 0, len.length);
-	                    if ((rank > 1 || nowtypedata.getcannull()) && alldata.length > 0)
+	                    
+	                    try (ByteArrayOutputStream stream2 = new ByteArrayOutputStream())
+	                    {
+	    	                try (DataOutputStream writer2 = new DataOutputStream(stream2))
+	                        {
+	                            byte nullbool = 0;
+	                            for (int i = 0; i < alldata.length; i++)
+	                            {
+	                                byte[] getdata = ChuonBinaryTyping(nowtypedata, rank - 1, alldata[i]);
+	                                if ((rank > 1 || nowtypedata.getcannull()) && alldata.length > 0)
+	                                {
+	                                    if (i % 8 == 0)
+	                                    {
+	                                        if (i != 0)
+	                                        {
+	                                            writer.writeByte(nullbool);
+	                                        }
+	                                        nullbool = 0;
+	                                    }
+	                                    nullbool <<= 1;
+	                                    if (getdata == null)
+	                                    {
+	                                        nullbool++;
+	                                    }
+	                                }
+	                                if (getdata != null)
+	                                {
+	                                    writer2.write(getdata);
+	                                }
+	                            }
+	                            if ((rank > 1 || nowtypedata.getcannull()) && alldata.length > 0) writer.writeByte(nullbool);
+	                            writer2.close();
+	                            stream2.close();
+	                            writer.write(stream2.toByteArray());
+	                        }
+	                    }
+
+	                    
+	                    /*if ((rank > 1 || nowtypedata.getcannull()) && alldata.length > 0)
 	                    {
 	                        byte nullbool = 0;
 	                        for (int i = 0; i < alldata.length; i++)
@@ -231,7 +293,7 @@ public class ChuonString {
 	                        {
 	                            writer.write(ChuonBinaryTyping(nowtypedata, rank - 1, alldata[i]));
 	                        }
-	                    }
+	                    }*/
 	                    writer.close();
 	                    stream.close();
 	                    ans = stream.toByteArray();

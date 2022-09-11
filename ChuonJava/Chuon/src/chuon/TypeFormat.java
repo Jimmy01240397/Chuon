@@ -387,14 +387,17 @@ class TypeFormat {
                         index[0] += 2;
                         return null;
                     }
-                    ChuonBinary chuonBinary = new ChuonBinary(data, index);
-                    return chuonBinary.toObject();
+                    ChuonBinary chuonBinary = new ChuonBinary();
+                    chuonBinary.data = data;
+                    return chuonBinary.toObject(index);
 				}
 
 				@Override
 				public Object StringToData(String data) throws Exception {
                     if (StringTool.RemoveString(data, " ", "\n", "\r", "\t").equals("null")) return null;
-                    ChuonString chuonString = new ChuonString(data);
+                    //ChuonString chuonString = new ChuonString(data);
+                    ChuonString chuonString = new ChuonString();
+                    chuonString.data = data;
                     return chuonString.toObject();
 				}
 				
@@ -776,13 +779,48 @@ class TypeFormat {
                             writer.writeByte(keysandvaluetyping[1].index);
                             writer.writeByte((byte)keysandvaluesrank[1]);
                             writer.write(GetBytesLength(nowdata.size()));
-                            for (int i = 0; i < nowdata.size(); i++)
-                            {
-                                Object key = keysandvalues[0][i];
-                                Object value = keysandvalues[1][i];
-                                writer.write(ChuonBinary.Typing(keysandvaluetyping[0], key, keysandvaluesrank[0]));
-                                writer.write(ChuonBinary.Typing(keysandvaluetyping[1], value, keysandvaluesrank[1]));
-                            }
+                            
+                            
+                           	try(ByteArrayOutputStream stream2 = new ByteArrayOutputStream())
+                           	{
+                           		try(DataOutputStream writer2 = new DataOutputStream(stream2))
+                           		{
+                                            byte valuenullbool = 0;
+                                            for (int i = 0; i < nowdata.size(); i++)
+                                            {
+                                                Object key = keysandvalues[0][i];
+                                                Object value = keysandvalues[1][i];
+                                                byte[] keydata = ChuonBinary.Typing(keysandvaluetyping[0], key, keysandvaluesrank[0]);
+                                                byte[] valuedata = ChuonBinary.Typing(keysandvaluetyping[1], value, keysandvaluesrank[1]);
+
+                                                if ((keysandvaluesrank[1] > 0 || keysandvaluetyping[1].cannull) && nowdata.size() > 0)
+                                                {
+                                                    if (i % 8 == 0)
+                                                    {
+                                                        if (i != 0)
+                                                        {
+                                                            writer.writeByte(valuenullbool);
+                                                        }
+                                                        valuenullbool = 0;
+                                                    }
+                                                    valuenullbool <<= 1;
+                                                    if (valuedata == null)
+                                                    {
+                                                        valuenullbool++;
+                                                    }
+                                                }
+                                                writer2.write(keydata, 0, keydata.length);
+                                                if (valuedata != null)
+                                                {
+                                                    writer2.write(valuedata, 0, valuedata.length);
+                                                }
+                                            }
+                                            if ((keysandvaluesrank[1] > 0 || keysandvaluetyping[1].cannull) && nowdata.size() > 0) writer.writeByte(valuenullbool);
+                                            writer2.close();
+                                            stream2.close();
+                                            writer.write(stream2.toByteArray());
+                           		}
+                           	}
                             writer.close();
                             stream.close();
                             return stream.toByteArray();
@@ -863,23 +901,33 @@ class TypeFormat {
                     typing datatyping = get(data[index[0]++]);
                     int datarank = data[index[0]++];
                     int len = GetIntLength(data, index);
-
-                    Class keynowtype = keytyping.type;
-                    for (int i = 0; i < keyrank; i++)
-                    {
-                    	keynowtype = Array.newInstance(keynowtype, 0).getClass();
-                    }
-                    Class datanowtype = datatyping.type;
-                    for (int i = 0; i < datarank; i++)
-                    {
-                    	keynowtype = Array.newInstance(datanowtype, 0).getClass();
-                    }
                     
                     HashMap ans = new HashMap();
+                    
+                    boolean[] valueallnullbools = new boolean[len];
+                    if (datarank > 0 || datatyping.cannull)
+                    {
+                        byte nullbool = 0;
+                        for (int i = 0; i < len; i++)
+                        {
+                            if (i % 8 == 0)
+                            {
+                                nullbool = data[index[0]];
+                                index[0]++;
+                            }
+                            int nowleft = len - (i / 8 * 8) >= 8 ? 8 : len - (i / 8 * 8);
+                            if ((i / 8 * 8) + (nowleft - 1 - (i % 8)) < valueallnullbools.length)
+                            {
+                                valueallnullbools[(i / 8 * 8) + (nowleft - 1 - (i % 8))] = (nullbool & 1) == 1;
+                            }
+                            nullbool >>= 1;
+                        }
+                    }
                     for (int i = 0; i < len; i++)
                     {
                         Object key = ChuonBinary.GetTyp(keytyping, data, keyrank, index);
-                        Object value = ChuonBinary.GetTyp(datatyping, data, datarank, index);
+                        Object value = valueallnullbools[i] ? null : ChuonBinary.GetTyp(datatyping, data, datarank, index);
+
                         ans.put(key, value);
                     }
    					return ans;
@@ -897,30 +945,11 @@ class TypeFormat {
                     String[] alldata = StringTool.TakeString(typeanddata[2], '{', '}');
                     int len = alldata.length;
                     
-                    Class keynowtype = keytyping.type;
-                    for (int i = 0; i < keyrank; i++)
-                    {
-                    	keynowtype = Array.newInstance(keynowtype, 0).getClass();
-                    }
-                    Class datanowtype = datatyping.type;
-                    for (int i = 0; i < datarank; i++)
-                    {
-                    	keynowtype = Array.newInstance(datanowtype, 0).getClass();
-                    }
-                    
                     HashMap ans = new HashMap();
                     for (int i = 0; i < len; i++)
                     {
                         String[] nowdata = StringTool.SplitWithFormatWithoutinArray(alldata[i], ',');
-                        if (keyrank > 0)
-                        {
-                            nowdata[0] = StringTool.TakeString(nowdata[0], '{', '}')[0];
-                        }
                         Object key = ChuonString.GetTyp(keytyping, keyrank, nowdata[0]);
-                        if (datarank > 0)
-                        {
-                            nowdata[1] = StringTool.TakeString(nowdata[1], '{', '}')[0];
-                        }
                         Object value = ChuonString.GetTyp(datatyping, datarank, nowdata[1]);
                         ans.put(key, value);
                     }
@@ -929,12 +958,127 @@ class TypeFormat {
    				
    				@Override
    				public String BinaryToString(byte[] data, int[] index) throws Exception {
-   					return DataToString(BinaryToData(data, index));
+                    typing keytyping = get(data[index[0]++]);
+                    int keyrank = data[index[0]++];
+                    typing datatyping = get(data[index[0]++]);
+                    int datarank = data[index[0]++];
+                    int len = GetIntLength(data, index);
+                    
+                    boolean[] valueallnullbools = new boolean[len];
+                    if (datarank > 0 || datatyping.cannull)
+                    {
+                        byte nullbool = 0;
+                        for (int i = 0; i < len; i++)
+                        {
+                            if (i % 8 == 0)
+                            {
+                                nullbool = data[index[0]];
+                                index[0]++;
+                            }
+                            int nowleft = len - (i / 8 * 8) >= 8 ? 8 : len - (i / 8 * 8);
+                            if ((i / 8 * 8) + (nowleft - 1 - (i % 8)) < valueallnullbools.length)
+                            {
+                                valueallnullbools[(i / 8 * 8) + (nowleft - 1 - (i % 8))] = (nullbool & 1) == 1;
+                            }
+                            nullbool >>= 1;
+                        }
+                    }
+                    
+                   	StringBuilder stringBuilder = new StringBuilder();
+                    stringBuilder.append("{");
+                    stringBuilder.append(keytyping.getname());
+                    for (int i = 0; i < keyrank; i++)
+                    {
+                        stringBuilder.append("[]");
+                    }
+                    stringBuilder.append(":");
+                    stringBuilder.append(datatyping.getname());
+                    for (int i = 0; i < datarank; i++)
+                    {
+                        stringBuilder.append("[]");
+                    }
+                    stringBuilder.append(":");
+                    for (int i = 0; i < len; i++)
+                    {   
+                    	stringBuilder.append("{");
+                        stringBuilder.append(ChuonBinary.ChuonStringTyping(keytyping, data, keyrank, index));
+                        stringBuilder.append(",");
+                        stringBuilder.append(valueallnullbools[i] ? ChuonString.Typing(datatyping, null, datarank) : ChuonBinary.ChuonStringTyping(datatyping, data, datarank, index));
+                        stringBuilder.append("}");
+                    }
+                    stringBuilder.append("}");
+                    return stringBuilder.toString();
+   					//return DataToString(BinaryToData(data, index));
    				}
    				
    				@Override
-   				public byte[] StringToBinary(String data) throws Exception {
-   					return DataToBinary(StringToData(data));
+   				public byte[] StringToBinary(String data) throws Exception 
+   				{
+                    String[] typeanddata = StringTool.SplitWithFormatWithoutinArray(StringTool.TakeString(data, '{', '}')[0], ':');
+                    typeanddata[0] = StringTool.RemoveString(typeanddata[0], " ", "\n", "\r", "\t");
+                    typeanddata[1] = StringTool.RemoveString(typeanddata[1], " ", "\n", "\r", "\t");
+                    typing keytyping = get(StringTool.RemoveString(typeanddata[0], "[]"));
+                    int keyrank = StringTool.TakeString(typeanddata[0], '[', ']').length;
+                    typing datatyping = get(StringTool.RemoveString(typeanddata[1], "[]"));
+                    int datarank = StringTool.TakeString(typeanddata[1], '[', ']').length;
+                    String[] alldata = StringTool.TakeString(typeanddata[2], '{', '}');
+                    int len = alldata.length;
+                    
+                   	try(ByteArrayOutputStream stream = new ByteArrayOutputStream())
+                   	{
+                   		try(DataOutputStream writer = new DataOutputStream(stream))
+                   		{
+                            writer.writeByte(keytyping.index);
+                            writer.writeByte((byte)keyrank);
+                            writer.writeByte(datatyping.index);
+                            writer.writeByte((byte)datarank);
+                            writer.write(GetBytesLength(len));
+
+                           	try(ByteArrayOutputStream stream2 = new ByteArrayOutputStream())
+                           	{
+                           		try(DataOutputStream writer2 = new DataOutputStream(stream2))
+                           		{
+                                            byte valuenullbool = 0;
+                                            for (int i = 0; i < len; i++)
+                                            {
+                                                String[] nowdata = StringTool.SplitWithFormatWithoutinArray(alldata[i], ',');
+                                                byte[] keydata = ChuonString.ChuonBinaryTyping(keytyping, keyrank, nowdata[0]);
+                                                byte[] valuedata = ChuonString.ChuonBinaryTyping(datatyping, datarank, nowdata[1]);
+
+                                                if ((datarank > 0 || datatyping.cannull) && len > 0)
+                                                {
+                                                    if (i % 8 == 0)
+                                                    {
+                                                        if (i != 0)
+                                                        {
+                                                            writer.writeByte(valuenullbool);
+                                                        }
+                                                        valuenullbool = 0;
+                                                    }
+                                                    valuenullbool <<= 1;
+                                                    if (valuedata == null)
+                                                    {
+                                                        valuenullbool++;
+                                                    }
+                                                }
+                                                writer2.write(keydata, 0, keydata.length);
+                                                if (valuedata != null)
+                                                {
+                                                    writer2.write(valuedata, 0, valuedata.length);
+                                                }
+                                            }
+                                            if ((datarank > 0 || datatyping.cannull) && len > 0) writer.writeByte(valuenullbool);
+                                            writer2.close();
+                                            stream2.close();
+                                            writer.write(stream2.toByteArray());
+                           		}
+                           	}
+                            writer.close();
+                            stream.close();
+                            return stream.toByteArray();
+                   		}
+                   	}
+   					//return DataToBinary(StringToData(data));
    				}
    			}
        	));

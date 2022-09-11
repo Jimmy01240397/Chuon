@@ -678,14 +678,45 @@ namespace Chuon
                         Array values = Array.CreateInstance(Subdatatype[1], nowdata.Values.Count);
                         nowdata.Keys.CopyTo(keys, 0);
                         nowdata.Values.CopyTo(values, 0);
-                        for (int i = 0; i < nowdata.Count; i++)
+                        using (MemoryStream stream2 = new MemoryStream())
+                        using (BinaryWriter writer2 = new BinaryWriter(stream2))
                         {
-                            object key = keys.GetValue(i);
-                            ArrayRank(out Type keybasetype, ref key);
-                            object value = values.GetValue(i);
-                            ArrayRank(out Type valuebasetype, ref value);
-                            writer.Write(ChuonBinary.Typing(keytyping, key, keyrank));
-                            writer.Write(ChuonBinary.Typing(datatyping, value, datarank));
+                            byte valuenullbool = 0;
+                            for (int i = 0; i < nowdata.Count; i++)
+                            {
+                                object key = keys.GetValue(i);
+                                ArrayRank(out Type keybasetype, ref key);
+                                object value = values.GetValue(i);
+                                ArrayRank(out Type valuebasetype, ref value);
+                                byte[] keydata = ChuonBinary.Typing(keytyping, key, keyrank);
+                                byte[] valuedata = ChuonBinary.Typing(datatyping, value, datarank);
+
+                                if ((datarank > 0 || datatyping.cannull) && nowdata.Count > 0)
+                                {
+                                    if (i % 8 == 0)
+                                    {
+                                        if (i != 0)
+                                        {
+                                            writer.Write(valuenullbool);
+                                        }
+                                        valuenullbool = 0;
+                                    }
+                                    valuenullbool <<= 1;
+                                    if (valuedata == null)
+                                    {
+                                        valuenullbool++;
+                                    }
+                                }
+                                writer2.Write(keydata, 0, keydata.Length);
+                                if (valuedata != null)
+                                {
+                                    writer2.Write(valuedata, 0, valuedata.Length);
+                                }
+                            }
+                            if ((datarank > 0 || datatyping.cannull) && nowdata.Count > 0) writer.Write(valuenullbool);
+                            writer2.Close();
+                            stream2.Close();
+                            writer.Write(stream2.ToArray());
                         }
                         writer.Close();
                         stream.Close();
@@ -758,10 +789,30 @@ namespace Chuon
                     System.Reflection.MethodInfo method = thistype.GetMethod("Add");
 
                     IDictionary ans = (IDictionary)Activator.CreateInstance(thistype);
+
+                    bool[] valueallnullbools = new bool[len];
+                    if (datarank > 0 || datatyping.cannull)
+                    {
+                        byte nullbool = 0;
+                        for (int i = 0; i < len; i++)
+                        {
+                            if (i % 8 == 0)
+                            {
+                                nullbool = data[index];
+                                index++;
+                            }
+                            int nowleft = len - (i / 8 * 8) >= 8 ? 8 : len - (i / 8 * 8);
+                            if ((i / 8 * 8) + (nowleft - 1 - (i % 8)) < valueallnullbools.Length)
+                            {
+                                valueallnullbools[(i / 8 * 8) + (nowleft - 1 - (i % 8))] = (nullbool & 1) == 1;
+                            }
+                            nullbool >>= 1;
+                        }
+                    }
                     for (int i = 0; i < len; i++)
                     {
                         object key = ChuonBinary.GetTyp(keytyping, data, keyrank, ref index);
-                        object value = ChuonBinary.GetTyp(datatyping, data, datarank, ref index);
+                        object value = valueallnullbools[i] ? null : ChuonBinary.GetTyp(datatyping, data, datarank, ref index);
                         method.Invoke(ans, new object[] { key, value });
                     }
                     return ans;
@@ -797,15 +848,7 @@ namespace Chuon
                     for (int i = 0; i < len; i++)
                     {
                         string[] nowdata = StringTool.SplitWithFormatWithoutinArray(alldata[i], ',');
-                        if (keyrank > 0)
-                        {
-                            nowdata[0] = nowdata[0].TakeString('{', '}')[0];
-                        }
                         object key = ChuonString.GetTyp(keytyping, keyrank, nowdata[0]);
-                        if (datarank > 0)
-                        {
-                            nowdata[1] = nowdata[1].TakeString('{', '}')[0];
-                        }
                         object value = ChuonString.GetTyp(datatyping, datarank, nowdata[1]);
                         method.Invoke(ans, new object[] { key, value });
                     }
