@@ -4,7 +4,7 @@ if [ "$1" != "" ]
 then
     for a in $(git submodule status | awk '{print $2}')
     do
-        git rm $a
+        git rm -rf $a
         rm -rf .git/modules/$a
     done
 
@@ -20,6 +20,6 @@ then
 else
     git branch -D release
     git branch release
-    git checkout release
+    git checkout --recurse-submodules release
     git filter-branch -f --tree-filter "bash $(realpath $0) true" --prune-empty
 fi
